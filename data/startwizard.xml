@@ -26,8 +26,8 @@ self.selectKey("OK")
 		<step id="network" >
 			<text value="Please connect your receiver to the internet"/>
 			<list>
-				<listentry caption="Check the internet connection" step="update"/>
-				<listentry caption="Skip internet connection check (disables automatic package installation)" step="timezone"/>
+				<listentry caption="Test the internet connection" step="update"/>
+				<listentry caption="Skip internet connection test" step="timezone"/>
 			</list>
 			<code>
 self.clearSelectedKeys()
@@ -39,7 +39,7 @@ self.selectKey("OK")
 			</code>
 		</step>
 		<step id="update">
-			<text value="Checking the internet connection"/>
+			<text value="Testing the internet connection...Please Wait."/>
 			<config screen="InstallWizard" module="InstallWizard" args="0" type="ConfigList"/>
 			<code>
 self.clearSelectedKeys()
@@ -52,10 +52,10 @@ self.selectKey("OK")
 			<condition>
 self.condition = not config.misc.installwizard.opkgloaded.value
 			</condition>
-			<text value="Your receiver does not have an internet connection"/>
+			<text value="Your receiver does not have an internet connection."/>
 			<list>
-				<listentry caption="Check the internet connection again" step="update"/>
-				<listentry caption="Skip internet connection check (disables automatic package installation)" step="timezone"/>
+				<listentry caption="Test or Setup the internet connection again." step="update"/>
+				<listentry caption="Skip internet connection test." step="timezone"/>
 			</list>
 			<code>
 self.clearSelectedKeys()
