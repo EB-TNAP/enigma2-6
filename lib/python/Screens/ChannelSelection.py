@@ -51,6 +51,7 @@ from Components.PluginComponent import plugins
 from Screens.ChoiceBox import ChoiceBox
 from Screens.EventView import EventViewEPGSelect
 import os
+import unicodedata
 from time import time
 profile("ChannelSelection.py after imports")
 
@@ -1424,8 +1425,8 @@ MODE_RADIO = 1
 # type 2 = digital radio sound service
 # type 10 = advanced codec digital radio sound service
 
-service_types_tv = '1:7:1:0:0:0:0:0:0:0:(type == 1) || (type == 17) || (type == 22) || (type == 25) || (type == 31) || (type == 32) || (type == 134) || (type == 195)'
-service_types_radio = '1:7:2:0:0:0:0:0:0:0:(type == 2) || (type == 10)'
+service_types_tv = '1:7:1:0:0:0:0:0:0:0:(type == 1) || (type == 17) || (type == 22) || (type == 25) || (type == 31) || (type == 134) || (type == 195) || (type == 0) || (type == 11) || (type == 192) || (type == C0) || (type == 32) || (type == 20)' # Added type == 0 Added type == B Added type == C0
+service_types_radio = '1:7:2:0:0:0:0:0:0:0:(type == 2) || (type == A) ||(type == 10)'
 
 
 class ChannelSelectionBase(Screen, HelpableScreen):
@@ -1681,6 +1682,7 @@ class ChannelSelectionBase(Screen, HelpableScreen):
 						self.setCurrentSelectionAlternative(playingref)
 
 	def showSatellites(self, changeMode=False):
+		z = 0
 		if not self.pathChangeDisabled:
 			refstr = '%s FROM SATELLITES ORDER BY satellitePosition' % (self.service_types)
 			if not self.preEnterPath(refstr):
@@ -1722,6 +1724,9 @@ class ChannelSelectionBase(Screen, HelpableScreen):
 								service_type = self.showSatDetails and _("New")
 							else:
 								service_type = _("Services")
+								z = 1
+								if orbpos ==2571 and self.mode ==MODE_TV:
+								    service_type = ()
 							if service_type:
 								if unsigned_orbpos == 0xFFFF: #Cable
 									service_name = _("Cable")

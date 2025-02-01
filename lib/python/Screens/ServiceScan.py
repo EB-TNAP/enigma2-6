@@ -8,7 +8,33 @@ from Components.FIFOList import FIFOList
 from Components.Sources.FrontendInfo import FrontendInfo
 from Components.config import config
 from enigma import eServiceReference
+from Tools.Directories import fileExists #extra import
 
+BOX_MODEL = ""
+BOX_NAME = ""
+if fileExists("/proc/stb/info/boxtype") and not fileExists("/proc/stb/info/hwmodel") and not fileExists("/proc/stb/info/gbmodel"):
+	try:
+		p = 0
+		nimfile = open("/proc/bus/nim_sockets")
+		for line in nimfile:
+			line = line.strip()
+			if line.endswith("AVL62X1"):
+				p = 1
+		l = open("/proc/stb/info/boxtype")
+		model = l.read().strip()
+		l.close()
+		BOX_NAME = str(model.lower())
+		if BOX_NAME.startswith("et"):
+			BOX_MODEL = "xtrend"
+		elif BOX_NAME.startswith("os"):
+			BOX_MODEL = "edision"
+		elif BOX_NAME.startswith("sf"):
+			BOX_MODEL = "octagon"
+		if p == 1 and BOX_NAME.startswith("sf"):
+			BOX_NAME = "sf8008-Supreme"
+		nimfile.close()
+	except:
+		pass
 
 class ServiceScanSummary(Screen):
 	skin = """

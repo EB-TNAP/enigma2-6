@@ -35,7 +35,6 @@ class NetworkAdapterSelection(Screen, HelpableScreen):
 		self["key_green"] = StaticText(_("Select"))
 		self["key_yellow"] = StaticText("")
 		self["key_blue"] = StaticText("")
-		self["key_menu"] = StaticText(_("MENU"))
 		self["introduction"] = StaticText(self.edittext)
 
 		self["OkCancelActions"] = HelpableActionMap(self, ["OkCancelActions"],
@@ -217,8 +216,25 @@ class AdapterSetup(ConfigListScreen, HelpableScreen, Screen):
 
 		self.createConfig()
 
+		self["OkCancelActions"] = HelpableActionMap(self, ["OkCancelActions"],
+		{
+			"cancel": (self.keyCancel, _("exit network adapter configuration")),
+			"ok": (self.keySave, _("activate network adapter configuration")),
+		})
+
+		self["ColorActions"] = HelpableActionMap(self, ["ColorActions"],
+		{
+			"red": (self.keyCancel, _("exit network adapter configuration")),
+			"green": (self.keySave, _("activate network adapter configuration")),
+		})
+
+		self["actions"] = NumberActionMap(["SetupActions"],
+		{
+			"ok": self.keySave,
+		}, -2)
+
 		self.list = []
-		ConfigListScreen.__init__(self, self.list, session=self.session, fullUI=True)
+		ConfigListScreen.__init__(self, self.list, session=self.session)
 		self.createSetup()
 		self.onLayoutFinish.append(self.layoutFinished)
 		self.onClose.append(self.cleanup)
@@ -270,9 +286,8 @@ class AdapterSetup(ConfigListScreen, HelpableScreen, Screen):
 	def createConfig(self):
 		self.wlanSSID = None
 		self.encryptionKey = None
-		self.ws = None
 
-		if iNetwork.isWirelessInterface(self.iface) and hasattr(config.plugins, "wlan"):
+		if iNetwork.isWirelessInterface(self.iface):
 			from Plugins.SystemPlugins.WirelessLan.Wlan import wpaSupplicant
 			self.ws = wpaSupplicant()
 			encryptionlist = [
@@ -414,8 +429,7 @@ class AdapterSetup(ConfigListScreen, HelpableScreen, Screen):
 				iNetwork.removeAdapterAttribute(self.iface, "dns-nameservers")
 			if self.extended is not None and self.configStrings is not None:
 				iNetwork.setAdapterAttribute(self.iface, "configStrings", self.configStrings(self.iface))
-				if self.ws:
-					self.ws.writeConfig(self.iface)
+				self.ws.writeConfig(self.iface)
 
 			if not self.activateInterfaceEntry.value:
 				iNetwork.deactivateInterface(self.iface, self.deactivateInterfaceCB)
@@ -481,15 +495,14 @@ class AdapterSetup(ConfigListScreen, HelpableScreen, Screen):
 
 	def cleanup(self):
 		iNetwork.stopLinkStateConsole()
-		if hasattr(config.plugins, "wlan"):
-			config.plugins.wlan.encryption.removeNotifier(self.createSetup)
+		config.plugins.wlan.encryption.removeNotifier(self.createSetup)
 		self.activateInterfaceEntry.removeNotifier(self.createSetup)
 		self.dhcpConfigEntry.removeNotifier(self.createSetup)
 		self.hasGatewayConfigEntry.removeNotifier(self.createSetup)
 
 	def hideInputHelp(self):
 		current = self["config"].getCurrent()
-		if current == self.wlanSSID or (current and current == self.encryptionKey and config.plugins.wlan.encryption.value != "Unencrypted"):
+		if current == self.wlanSSID or (current == self.encryptionKey and config.plugins.wlan.encryption.value != "Unencrypted"):
 			if current[1].help_window.instance is not None:
 				current[1].help_window.instance.hide()
 
