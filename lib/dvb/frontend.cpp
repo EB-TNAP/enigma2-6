@@ -509,26 +509,42 @@ RESULT eDVBFrontendParameters::getHash(unsigned long &hash) const
 	}
 }
 
+// File: eDVBFrontendParameters.cpp
+// Function to calculate lock timeout based on frontend type and parameters
+
 RESULT eDVBFrontendParameters::calcLockTimeout(unsigned int &timeout) const
 {
-	switch (m_type)
-	{
-		case iDVBFrontend::feSatellite:
-		{
-				/* high symbol rate transponders tune faster, due to
-					requiring less zigzag and giving more symbols faster.
-
-					5s are definitely not enough on really low SR when
-					zigzag has to find the exact frequency first.
-				*/
-			if (sat.symbol_rate > 20000000)
-				timeout = 5000;
-			else if (sat.symbol_rate > 10000000)
-				timeout = 10000;
-			else
-				timeout = 20000;
-			return 0;
-		}
+    switch (m_type)
+    {
+        case iDVBFrontend::feSatellite:
+        {
+            // Determine timeout based on satellite symbol rate
+            if (sat.symbol_rate >= 20000000)
+            {
+                // High symbol rate, fast tuning
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 6000", sat.symbol_rate);
+                timeout = 6000; // 6 seconds
+            }
+            else if (sat.symbol_rate >= 2000000)
+            {
+                // Moderate symbol rate
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 10000", sat.symbol_rate);
+                timeout = 10000; // 10 seconds
+            }
+            else if (sat.symbol_rate >= 800000)
+            {
+                // Low symbol rate, slower tuning
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 30000", sat.symbol_rate);
+                timeout = 30000; // 30 seconds
+            }
+            else
+            {
+                // Very low symbol rate, longest tuning
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 60000", sat.symbol_rate);
+                timeout = 60000; // 60 seconds
+            }
+            return 0;
+        }
 		case iDVBFrontend::feCable:
 		{
 			timeout = 5000;
@@ -541,7 +557,7 @@ RESULT eDVBFrontendParameters::calcLockTimeout(unsigned int &timeout) const
 		}
 		case iDVBFrontend::feATSC:
 		{
-			timeout = 5000;
+			timeout = 3000;
 			return 0;
 		}
 		default:
@@ -628,7 +644,7 @@ int eDVBFrontend::openFrontend()
 		{
 			if (::ioctl(m_fd, FE_GET_INFO, &fe_info) < 0)
 			{
-				eWarning("[eDVBFrontend] ioctl FE_GET_INFO failed");
+				eWarning("[eDVB-#631-Frontend] ioctl FE_GET_INFO failed");
 				::close(m_fd);
 				m_fd = -1;
 				return -1;
@@ -853,9 +869,11 @@ void eDVBFrontend::feEvent(int w)
 		if (event.status & FE_HAS_LOCK)
 		{
 			state = stateLock;
+			eDebug("[eDVB-#865-Frontend%d] fe event: Has Lock!!!", m_dvbid);
 		}
 		else
 		{
+			eDebug("[eDVB-#869-Frontend%d] fe event: Not Locked!!!", m_dvbid);
 			if (m_tuning) {
 				state = stateTuning;
 				if (event.status & FE_TIMEDOUT) {
@@ -1274,7 +1292,7 @@ void eDVBFrontend::calculateSignalQuality(int snr, int &signalquality, int &sign
 		ret = (int)(snr / 46.8);
 		sat_max = 1620;
 	}
-	else if(!strcmp(m_description, "WinTV HVR-850") || !strcmp(m_description, "Hauppauge") || !strcmp(m_description, "LG Electronics LGDT3306A VSB/QAM Frontend"))
+	else if(!strcmp(m_description, "WinTV HVR-850") || !strcmp(m_description, "Hauppauge") || !strcmp(m_description, "WinTV HVR-950") || !strcmp(m_description, "LG Electronics LGDT3306A VSB/QAM Frontend"))
 	{
 		eDVBFrontendParametersATSC parm{};
 		oparm.getATSC(parm);
@@ -1395,7 +1413,8 @@ int eDVBFrontend::readFrontendData(int type)
 {
 	char force_legacy_signal_stats[64] = {};
 	sprintf(force_legacy_signal_stats, "config.Nims.%d.force_legacy_signal_stats", m_slotid);
-
+	char show_signal_below_lock[64] = {};
+	sprintf(show_signal_below_lock, "config.Nims.%d.show_signal_below_lock", m_slotid);
 	switch(type)
 	{
 		case iFrontendInformation_ENUMS::bitErrorRate:
@@ -1421,6 +1440,17 @@ int eDVBFrontend::readFrontendData(int type)
 				}
 				return snr;
 			}
+			else if (eConfigManager::getConfigBoolValue(show_signal_below_lock, true))
+			{
+				uint16_t snr = 0;
+				if (!m_simulate)
+				{
+					if (ioctl(m_fd, FE_READ_SNR, &snr) < 0 && errno != ERANGE)
+						eDebug("[eDVBFrontend] FE_READ_SNR failed: %m");
+				}
+				if (snr < 15536)
+					return snr;
+			}
 			break;
 		case iFrontendInformation_ENUMS::signalQuality:
 		case iFrontendInformation_ENUMS::signalQualitydB: /* this moved into the driver on DVB API 5.10 */
@@ -1429,7 +1459,7 @@ int eDVBFrontend::readFrontendData(int type)
 				int signalquality = 0;
 				int signalqualitydb = 0;
 #if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 10
-				if (m_dvbversion >= DVB_VERSION(5, 10) && !eConfigManager::getConfigBoolValue(force_legacy_signal_stats, false))
+				if (m_dvbversion >= DVB_VERSION(5, 10))
 				{
 					dtv_property prop[1] = {};
 					prop[0].cmd = DTV_STAT_CNR;
@@ -1483,6 +1513,81 @@ int eDVBFrontend::readFrontendData(int type)
 					return signalqualitydb;
 				}
 			}
+			else if (eConfigManager::getConfigBoolValue(show_signal_below_lock, true))
+			{
+				int signalquality = 0;
+				int signalqualitydb = 0;
+#if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 10
+				if (m_dvbversion >= DVB_VERSION(5, 10))
+				{
+					dtv_property prop[1] = {};
+					prop[0].cmd = DTV_STAT_CNR;
+					dtv_properties props;
+					props.props = prop;
+					props.num = 1;
+
+					if (::ioctl(m_fd, FE_GET_PROPERTY, &props) < 0 && errno != ERANGE)
+					{
+						eDebug("[eDVBFrontend] DTV_STAT_CNR failed: %m");
+					}
+					else
+					{
+						for(unsigned int i=0; i<prop[0].u.st.len; i++)
+						{
+							if (prop[0].u.st.stat[i].scale == FE_SCALE_DECIBEL)
+							{
+								signalqualitydb = prop[0].u.st.stat[i].svalue / 10;
+							}
+							else if (prop[0].u.st.stat[i].scale == FE_SCALE_RELATIVE)
+							{
+								signalquality = prop[0].u.st.stat[i].svalue;
+							}
+						}
+						if (signalqualitydb)
+						{
+							if(type == iFrontendInformation_ENUMS::signalQualitydB)
+							{
+								return signalqualitydb;
+							}
+							if(!signalquality)
+							{
+								/* provide an estimated percentage when drivers lack this info */
+								signalquality = calculateSignalPercentage(signalqualitydb);
+							}
+							return signalquality;
+			                if (m_state != stateLock)
+			                {
+				                uint16_t snr = 0;
+				                int signalquality = 0;
+				                int signalqualitydb = 0;
+				                if (!m_simulate)
+					                ioctl(m_fd, FE_READ_SNR, &snr);
+				                if (snr > 0 && snr < 65535)
+				                {
+					                calculateSignalQuality(snr, signalquality, signalqualitydb);
+					                if (type == iFrontendInformation_ENUMS::signalQuality)
+						                return signalquality;
+					                else
+						                return signalqualitydb;
+				                }
+			                }
+						}
+					}
+				}
+#endif
+				/* fallback to old DVB API */
+				int snr = readFrontendData(iFrontendInformation_ENUMS::snrValue);
+				calculateSignalQuality(snr, signalquality, signalqualitydb);
+
+				if (type == iFrontendInformation_ENUMS::signalQuality)
+				{
+					return signalquality;
+				}
+				else
+				{
+					return signalqualitydb;
+				}
+			}
 			break;
 		case iFrontendInformation_ENUMS::signalPower:
 			if (m_state == stateLock)
@@ -1491,7 +1596,7 @@ int eDVBFrontend::readFrontendData(int type)
 				if (!m_simulate)
 				{
 #if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 10
-					if (m_dvbversion >= DVB_VERSION(5, 10) && !eConfigManager::getConfigBoolValue(force_legacy_signal_stats, false))
+					if (m_dvbversion >= DVB_VERSION(5, 10))
 					{
 						dtv_property prop[1] = {};
 						prop[0].cmd = DTV_STAT_SIGNAL_STRENGTH;
@@ -1533,7 +1638,7 @@ int eDVBFrontend::readFrontendData(int type)
 			fe_status_t status;
 			if (!m_simulate)
 			{
-				if ( ioctl(m_fd, FE_READ_STATUS, &status) < 0 && errno != ERANGE )
+				if ( ioctl(m_fd, FE_READ_STATUS, &status) < 0 && errno == ERANGE ) // Silenced this warning for TBS 5925 Should be != ERANGE
 					eDebug("[eDVBFrontend] FE_READ_STATUS failed: %m");
 				return (int)status;
 			}
@@ -1832,25 +1937,46 @@ int eDVBFrontend::tuneLoopInt()  // called by m_tuneTimer
 			}
 			case eSecCommand::START_TUNE_TIMEOUT:
 			{
-				int tuneTimeout = m_sec_sequence.current()->timeout;
-				eDebugNoSimulate("[eDVBFrontend%d] startTuneTimeout %d", m_dvbid, tuneTimeout);
-				if (!m_simulate)
+				char allow_unlocked_transponder[64] = {};
+				sprintf(allow_unlocked_transponder, "config.Nims.%d.allow_unlocked_transponder", m_slotid);
+				sleep(.3); // below
+				int lockstat = readFrontendData(iFrontendInformation_ENUMS::lockState);
+				int tuneTimeout = (m_sec_sequence.current()->timeout);
+				int allowunlock = (eConfigManager::getConfigBoolValue(allow_unlocked_transponder));
+				if (!m_simulate && allowunlock == 0 && lockstat == 0)
+				{
+					tuneTimeout = 0;
+					m_timeout->start((3000), 1);
+					eDebug("[eDVBFrontend%d] lockstat == 0 UNLOCKED TRANSPONDER  Timeout = %d, lockstat =  %d allowunlock = %d" , m_dvbid, tuneTimeout, lockstat, allowunlock);
+				}
+				if (!m_simulate && allowunlock == 1 && lockstat == 0)
+				{
+					eDebugNoSimulate("[eDVBFrontend%d] startTuneTimeout %d", m_dvbid, tuneTimeout);
+					m_timeout->start(tuneTimeout, 1);				
+					eDebug("[eDVBFrontend%d] lockstat == 0  Timeout = %d, lockstat =  %d allowunlock = %d", m_dvbid, tuneTimeout, lockstat, allowunlock);
+				}
+				if (!m_simulate && allowunlock == 1 && lockstat == 1)
+				{
+					eDebugNoSimulate("[eDVBFrontend%d] startTuneTimeout %d", m_dvbid, tuneTimeout);
 					m_timeout->start(tuneTimeout, 1);
+					eDebug("[eDVBFrontend%d] lockstat == 1  Timeout = %d, lockstat =  %d allowunlock = %d", m_dvbid, tuneTimeout, lockstat, allowunlock);
+				}
+				if (!m_simulate && allowunlock == 0 && lockstat == 1)
+				{
+					eDebugNoSimulate("[eDVBFrontend%d] startTuneTimeout %d", m_dvbid, tuneTimeout);
+					m_timeout->start(tuneTimeout, 1);
+					eDebug("[eDVBFrontend%d] lockstat == 1  Timeout = %d, lockstat =  %d allowunlock = %d", m_dvbid, tuneTimeout, lockstat, allowunlock);
+				}
 				++m_sec_sequence.current();
 				break;
 			}
 			case eSecCommand::SET_TIMEOUT:
-				m_timeoutCount = m_sec_sequence.current()++->val;
+				m_timeoutCount = (m_sec_sequence.current()++->val) - 1000;
 				eDebugNoSimulate("[eDVBFrontend%d] set timeout %d", m_dvbid, m_timeoutCount);
 				break;
 			case eSecCommand::IF_TIMEOUT_GOTO:
-				if (!m_timeoutCount)
-				{
-					eDebugNoSimulate("[eDVBFrontend%d] rotor timout", m_dvbid);
-					setSecSequencePos(m_sec_sequence.current()->steps);
-				}
-				else
-					++m_sec_sequence.current();
+				eDebugNoSimulate("[eDVBFrontend%d] rotor timout", m_dvbid);
+				setSecSequencePos(m_sec_sequence.current()->steps);
 				break;
 			case eSecCommand::MEASURE_IDLE_INPUTPOWER:
 			{
@@ -2586,7 +2712,7 @@ RESULT eDVBFrontend::tune(const iDVBFrontendParameters &where, bool blindscan)
 	if (m_blindscan)
 	{
 		/* blindscan iterations can take a long time, use a long timeout */
-		timeout = 60000;
+		timeout = 20000;
 	}
 	else
 	{

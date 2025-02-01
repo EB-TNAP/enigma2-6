@@ -65,14 +65,14 @@ int eDVBFrontendStatus::getBER() const
 
 int eDVBFrontendStatus::getSNR() const
 {
-	if (!frontend || getState() == iDVBFrontend_ENUMS::stateTuning) return 0;
+	if (!frontend) return 0;
 	return frontend->readFrontendData(iFrontendInformation_ENUMS::signalQuality);
 }
 
 int eDVBFrontendStatus::getSNRdB() const
 {
 	int value;
-	if (!frontend || getState() == iDVBFrontend_ENUMS::stateTuning) return 0;
+	if (!frontend) return 0;
 	value = frontend->readFrontendData(iFrontendInformation_ENUMS::signalQualitydB);
 	if (value == 0x12345678)
 	{
@@ -285,7 +285,7 @@ int eDVBSatelliteTransponderData::getFecInner() const
 	case FEC_8_9: return eDVBFrontendParametersSatellite::FEC_8_9;
 	case FEC_9_10: return eDVBFrontendParametersSatellite::FEC_9_10;
 	case FEC_NONE: return eDVBFrontendParametersSatellite::FEC_None;
-	default: eDebug("[eDVBSatelliteTransponderData] got unsupported FEC from frontend! report as FEC_AUTO!\n");
+	default: eDebug("[eDVBSatelliteTransponderData] got unsupported FEC from frontend! report as FEC_AUTO!\n %d", (getProperty(DTV_INNER_FEC)));
 	[[fallthrough]];
 	case FEC_AUTO: return eDVBFrontendParametersSatellite::FEC_Auto;
 	}
