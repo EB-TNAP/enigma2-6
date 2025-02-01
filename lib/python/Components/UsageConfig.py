@@ -448,9 +448,9 @@ def InitUsageConfig():
 	config.epg = ConfigSubsection()
 	config.epg.eit = ConfigYesNo(default=True)
 	config.epg.mhw = ConfigYesNo(default=False)
-	config.epg.freesat = ConfigYesNo(default=True)
-	config.epg.viasat = ConfigYesNo(default=True)
-	config.epg.netmed = ConfigYesNo(default=True)
+	config.epg.freesat = ConfigYesNo(default=False)
+	config.epg.viasat = ConfigYesNo(default=False)
+	config.epg.netmed = ConfigYesNo(default=False)
 	config.epg.virgin = ConfigYesNo(default=False)
 	config.epg.opentv = ConfigYesNo(default=False)
 	config.misc.showradiopic = ConfigYesNo(default=True)
@@ -654,8 +654,7 @@ def InitUsageConfig():
 	config.subtitles.dvb_subtitles_original_position = ConfigSelection(default="0", choices=[("0", _("Original")), ("1", _("Fixed")), ("2", _("Relative"))])
 	config.subtitles.dvb_subtitles_centered = ConfigYesNo(default=False)
 	config.subtitles.subtitle_bad_timing_delay = ConfigSelection(default="0", choices=subtitle_delay_choicelist)
-	config.subtitles.dvb_subtitles_backtrans = ConfigSelection(default="-1", choices=[
-		("-1", _("Original")),
+	config.subtitles.dvb_subtitles_backtrans = ConfigSelection(default="0", choices=[
 		("0", _("No transparency")),
 		("25", "10%"),
 		("50", "20%"),

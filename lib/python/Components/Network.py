@@ -6,7 +6,7 @@ from socket import inet_ntoa
 from Components.Console import Console
 from Components.PluginComponent import plugins
 from Plugins.Plugin import PluginDescriptor
-
+import urllib.request
 
 class Network:
 	def __init__(self):
@@ -298,7 +298,7 @@ class Network:
 		return list(self.ifaces.keys())
 
 	def getAdapterAttribute(self, iface, attribute):
-		print("[Network] Getting attribute: ", attribute, " for adapter: ", iface)
+#		print("[Network] Getting attribute: ", attribute, " for adapter: ", iface)
 		if self.ifaces.get(iface, {}).get('up', False) and self.ifaces.get(iface, {}).get('ip', [0, 0, 0, 0]) == [0, 0, 0, 0]:
 			self.getAddrInet(iface, None)
 		return self.ifaces.get(iface, {}).get(attribute)
@@ -411,6 +411,12 @@ class Network:
 
 	def checkNetworkState(self, statecallback):
 		self.NetworkState = 0
+		try:
+			response=urllib.request.urlopen('http://www.google.com',timeout=10)
+			self.NetworkState = -1
+			print("---386--Network.py--Connected to the Internet")
+		except urllib.request.URLError as err:
+			print("---388--Network.py--NOT Connected to the Internet")
 		self.pingConsole = Console()
 		for server in ("www.openpli.org", "www.google.nl", "www.google.com"):
 			self.pingConsole.ePopen(("/bin/ping", "/bin/ping", "-c", "1", server), self.checkNetworkStateFinished, statecallback)
