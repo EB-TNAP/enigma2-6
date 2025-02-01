@@ -1,17 +1,22 @@
 #!/bin/sh
 
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-datarootdir=@datarootdir@
+BOOTLOGO=/usr/share/bootlogo.mvi
+[ -f /etc/enigma2/bootlogo.mvi ] && BOOTLOGO=/etc/enigma2/bootlogo.mvi
+/usr/bin/showiframe ${BOOTLOGO}
+
+prefix=/usr
+exec_prefix=/usr
+datarootdir=${prefix}/share
 
 if [ -d /home/root ]; then
 	export HOME=/home/root
 	cd
 fi
 
+
 # any debuglevel passed?
 if [ -z $ENIGMA_DEBUG_LVL ]; then
-	DEBUG_LVL=3
+	DEBUG_LVL=4
 else
 	DEBUG_LVL=$ENIGMA_DEBUG_LVL
 fi
@@ -26,32 +31,28 @@ LIBS=@libdir@/libopen.so.0.0.0
 # enigma main loop
 while : ; do
 	# show bootlogo on enigma2 start
-	if [ -x @bindir@/showiframe ]; then
-		if [ -f @sysconfdir@/enigma2/backdrop.mvi ]; then
-			@bindir@/showiframe @sysconfdir@/enigma2/backdrop.mvi
-		elif [ -f @sysconfdir@/enigma2/bootlogo.mvi ]; then
-			@bindir@/showiframe @sysconfdir@/enigma2/bootlogo.mvi
-		elif [ -f @datadir@/bootlogo.mvi ]; then
-			@bindir@/showiframe @datadir@/bootlogo.mvi
+	if [ -x /usr/bin/showiframe ]; then
+		if [ -f /usr/share/backdrop.mvi ]; then
+			/usr/bin/showiframe /usr/share/backdrop.mvi
 		fi
 	fi
 
 	# hook to execute scripts always before enigma2 start
-	if [ -x @bindir@/enigma2_pre_start.sh ]; then
-		@bindir@/enigma2_pre_start.sh
+	if [ -x /usr/bin/enigma2_pre_start.sh ]; then
+		/usr/bin/enigma2_pre_start.sh
 	fi
 
 	# start enigma
 	sync
 	if [ $DEBUG_LVL -lt 4 ]; then
-		LD_PRELOAD=$LIBS ENIGMA_DEBUG_LVL=$DEBUG_LVL @bindir@/enigma2
+		LD_PRELOAD=$LIBS ENIGMA_DEBUG_LVL=$DEBUG_LVL /usr/bin/enigma2
 	else
 		# remove old logfiles
 		keep=5;
 		for file in `ls -t /home/root/enigma.*.debuglog`; do let "keep--"; if [ "$keep" -lt "0" ]; then rm $file; fi; done
 		# todays log file
 		file="/home/root/enigma.$(date +%Y%m%d).debuglog"
-		LD_PRELOAD=$LIBS ENIGMA_DEBUG_LVL=$DEBUG_LVL @bindir@/enigma2 >> $file 2>&1
+		LD_PRELOAD=$LIBS ENIGMA_DEBUG_LVL=$DEBUG_LVL /usr/bin/enigma2 >> $file 2>&1
 	fi
 
 
