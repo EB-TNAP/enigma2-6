@@ -14,6 +14,9 @@ from Tools.BoundFunction import boundFunction
 from Screens.Screen import Screen # for services found class
 from Tools.Directories import fileExists   # Extra Import
 import os  # Extra Import
+import threading #Extra Import
+import time #Extra Import
+import datetime # Extra Import
 
 
 try: # for reading the current transport stream (SatfinderExtra)
@@ -121,6 +124,7 @@ class Satfinder(ScanSetup, ServiceScan):
 		self.frontend = None
 		if not self.openFrontend():
 			self.session.nav.stopService()
+			time.sleep(0.5)  # Prevent instant re-attempts
 			if not self.openFrontend():
 				if self.session.pipshown:
 					from Screens.InfoBar import InfoBar
@@ -135,9 +139,18 @@ class Satfinder(ScanSetup, ServiceScan):
 			dict = {}
 			self.frontend.getFrontendStatus(dict)
 			if dict["tuner_state"] == "FAILED" or dict["tuner_state"] == "LOSTLOCK":
+				self.retry_count += 1
+				total_retry_time = 2 ** self.retry_count
+				if total_retry_time > 60:  # Stop retries after 60s
+					print("[Satfinder] Stopping tuner retries after 60 seconds.")
+					return
+				delay = min(1000 * total_retry_time, 10000)  # Max 10s delay
+				print(f"[Satfinder] Retrying tuner in {delay/1000} seconds")
+				self.timer.start(delay, True)
 				self.retune()
 			else:
-				self.timer.start(500, True)
+				self.retry_count = 0  # Reset on success
+				self.timer.start(2000, True)  # Slightly longer interval to avoid overloading
 
 	def __onClose(self):
 		self.session.nav.playService(self.session.postScanService)
@@ -651,16 +664,19 @@ class SatfinderExtra(Satfinder):
 
 	def dvb_read_stream(self):
 		print ("[satfinder][dvb_read_stream] starting")
-		thread.start_new_thread(self.getCurrentTsidOnid, (True,))
+		thread = threading.Thread(target=self.getCurrentTsidOnid, args=(True,))
+		thread.daemon = True  # Daemon thread will terminate with the main program
+		thread.start()
 
 	def getCurrentTsidOnid(self, from_retune=False):
+		self.serviceList.clear()  # Prevent memory buildup
 		self.currentProcess = currentProcess = datetime.datetime.now()
 		self["tsid"].setText("")
 		self["onid"].setText("")
 		self["pos"].setText("") #(self.DVB_type.value)
 		self["key_yellow"].setText("")
 		self["actions2"].setEnabled(False)
-		self.serviceList = []
+
 
 		if not dvbreader_available or self.frontend is None or self.demux < 0:
 			return
@@ -671,7 +687,9 @@ class SatfinderExtra(Satfinder):
 		if not self.tunerLock() and not self.waitTunerLock(currentProcess): # dont even try to read the transport stream if tuner is not locked
 			return
 
-		thread.start_new_thread(self.monitorTunerLock, (currentProcess,)) # if tuner loses lock we start again from scratch
+		thread = threading.Thread(target=self.monitorTunerLock, args=(currentProcess,))
+		thread.daemon = True  # Ensures thread stops when program stops
+		thread.start()
 
 		adapter = 0
 		demuxer_device = "/dev/dvb/adapter%d/demux%d" % (adapter, self.demux)
@@ -882,19 +900,27 @@ class SatfinderExtra(Satfinder):
 				pass
 
 	def monitorTunerLock(self, currentProcess):
-		while True:
+		max_retries = 10  # Limit retries to prevent infinite loop
+		retries = 0
+		delay = 1.0
+		timeout_time = datetime.datetime.now() + datetime.timedelta(seconds=60)  # Max 60s
+		while retries < max_retries and datetime.datetime.now() < timeout_time:
 			try:
 				if self.currentProcess != currentProcess:
 				    return
 				frontendStatus = {}
 				self.frontend.getFrontendStatus(frontendStatus)
 				if frontendStatus["tuner_state"] != "LOCKED":
-				    print ("[monitorTunerLock] starting again from scratch")
-				    self.getCurrentTsidOnid(False) # if tuner lock fails start again from beginning
-				    return
-				time.sleep(1.0)
-			except:
-				pass
+				    print(f"[monitorTunerLock] Retrying tuner lock... attempt {retries+1}")
+				    self.getCurrentTsidOnid(False) # Restart tuner check
+				    retries += 1
+				    time.sleep(delay)
+				    delay = min(delay * 2, 8)  # Exponential backoff, max 8s
+				else:
+				    break
+			except Exception as e:
+				print(f"[monitorTunerLock] Error: {e}")
+				break
 
 
 	def keyReadServices(self):
