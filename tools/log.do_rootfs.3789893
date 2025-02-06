@@ -1,0 +1,960 @@
+DEBUG: Executing python function extend_recipe_sysroot
+NOTE: Direct dependencies are ['/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/meta-openpli/recipes-openpli/enigma2/enigma-info.bb:do_populate_sysroot', '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/meta-openpli/recipes-openpli/enigma2/enigma2.bb:do_populate_sysroot', '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-core/glibc/cross-localedef-native_2.39.bb:do_populate_sysroot', '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-core/glibc/ldconfig-native_2.12.1.bb:do_populate_sysroot', '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-devtools/qemu/qemuwrapper-cross_1.0.bb:do_populate_sysroot', '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-kernel/kmod/depmodwrapper-cross_1.0.bb:do_populate_sysroot', 'virtual:native:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-core/update-rc.d/update-rc.d_0.8.bb:do_populate_sysroot', 'virtual:native:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-devtools/makedevs/makedevs_1.0.1.bb:do_populate_sysroot', 'virtual:native:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-devtools/opkg-utils/opkg-utils_0.6.3.bb:do_populate_sysroot', 'virtual:native:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-devtools/opkg/opkg_0.6.3.bb:do_populate_sysroot', 'virtual:native:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-devtools/pseudo/pseudo_git.bb:do_populate_sysroot', 'virtual:native:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-extended/pigz/pigz_2.8.bb:do_populate_sysroot', 'virtual:native:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/meta/recipes-extended/zip/zip_3.0.bb:do_populate_sysroot']
+NOTE: Installed into sysroot: ['ldconfig-native', 'm4-native', 'libxml2-native', 'update-rc.d-native', 'desktop-file-utils-native', 'flex-native', 'gnu-config-native', 'makedevs-native', 'opkg-utils-native', 'opkg-native', 'python3-build-native', 'python3-flit-core-native', 'python3-installer-native', 'python3-packaging-native', 'python3-pyproject-hooks-native', 'python3-setuptools-native', 'python3-wheel-native', 'libarchive-native', 'libsolv-native', 'pigz-native', 'unzip-native', 'gdk-pixbuf-native', 'gobject-introspection-native', 'libjpeg-turbo-native', 'libpng-native', 'acl-native', 'debianutils-native', 'shared-mime-info-native']
+NOTE: Skipping as already exists in sysroot: ['libsigc++-3', 'mm-common', 'giflib', 'libid3tag', 'libmad', 'python3-twisted', 'python3-wifi', 'libdreamdvd', 'libdvbsi++', 'libdvdnav', 'libdvdread', 'libtuxtxt', 'tuxtxt-enigma2', 'enigma-info', 'enigma2', 'libudfread', 'avahi', 'openssl', 'base-files', 'base-passwd', 'dbus', 'expat', 'gettext-minimal-native', 'glib-2.0', 'cross-localedef-native', 'glibc', 'initscripts', 'libxcrypt', 'libxml2', 'ncurses', 'update-rc.d', 'util-linux-libuuid', 'util-linux', 'zlib', 'cmake-native', 'gcc-runtime', 'libgcc', 'libedit', 'libtool-native', 'opkg-utils', 'python3', 'qemu-native', 'qemuwrapper-cross', 'bzip2', 'libnsl2', 'libtirpc', 'libpam', 'shadow-sysroot', 'shadow', 'texinfo-dummy-native', 'xz', 'gobject-introspection', 'freetype', 'libjpeg-turbo', 'depmodwrapper-cross', 'linux-libc-headers', 'libpng', 'bash-completion', 'fribidi', 'gdbm', 'libcap-ng', 'libcap', 'libdaemon', 'libffi', 'libpcre2', 'sqlite3', 'openssl-native', 'expat-native', 'gettext-native', 'glib-2.0-native', 'ncurses-native', 'util-linux-libuuid-native', 'util-linux-native', 'zlib-native', 'libedit-native', 'make-native', 'perl-native', 'pseudo-native', 'python3-native', 'bzip2-native', 'libnsl2-native', 'libtirpc-native', 'shadow-native', 'xz-native', 'zip-native', 'zstd-native', 'kmod-native', 'attr-native', 'gdbm-native', 'libbsd-native', 'libcap-ng-native', 'libffi-native', 'libmd-native', 'libpcre2-native', 'sqlite3-native']
+DEBUG: sed -e 's:^[^/]*/:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/:g' /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/sysroots-components/x86_64/libxml2-native/fixmepath /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/sysroots-components/x86_64/gnu-config-native/fixmepath /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/sysroots-components/x86_64/gdk-pixbuf-native/fixmepath /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/sysroots-components/x86_64/gobject-introspection-native/fixmepath /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/sysroots-components/x86_64/libpng-native/fixmepath | xargs sed -i -e 's:FIXMESTAGINGDIRTARGET:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot:g; s:FIXMESTAGINGDIRHOST:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native:g' -e 's:FIXME_PSEUDO_SYSROOT:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/sysroots-components/x86_64/pseudo-native:g' -e 's:FIXME_HOSTTOOLS_DIR:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/hosttools:g' -e 's:FIXME_PKGDATA_DIR:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/pkgdata/sf8008:g' -e 's:FIXME_PSEUDO_LOCALSTATEDIR:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/pseudo/:g' -e 's:FIXME_LOGFIFO:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/temp/fifo.3789893:g'
+NOTE: Running postinst /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/usr/bin/postinst-gdk-pixbuf-native, output:
+b''
+NOTE: Running postinst /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/usr/bin/postinst-ldsoconf-gobject-introspection-native, output:
+b''
+DEBUG: Python function extend_recipe_sysroot finished
+DEBUG: Executing python function do_rootfs
+NOTE: libavahi-client3 rprovides libavahi-client, not replacing the latter
+NOTE: libcrypto-compat rprovides libcrypto-compat, not replacing the latter
+NOTE: Initializing intercept dir for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs
+DEBUG: Collected intercepts:
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/delay_to_first_boot
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/postinst_intercept
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_desktop_database
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_font_cache
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_gio_module_cache
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_gtk_icon_cache
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_gtk_immodules_cache
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_mandb
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_mime_database
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_pixbuf_cache
+  /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/openembedded-core/scripts/postinst-intercepts/update_udev_hwdb
+
+NOTE: ###### Generate rootfs #######
+NOTE: Executing '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/usr/bin/opkg-make-index --checksum md5 --checksum sha256 -r /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/Packages -p /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/Packages -m /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all ' ...
+NOTE: Executing '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/usr/bin/opkg-make-index --checksum md5 --checksum sha256 -r /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/Packages -p /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/Packages -m /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4 ' ...
+NOTE: Executing '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/usr/bin/opkg-make-index --checksum md5 --checksum sha256 -r /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/Packages -p /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/Packages -m /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008 ' ...
+NOTE: Installing the following packages: 3rd-party-feed-configs aio-grab avahi-daemon blindscan-s2 busybox-cron bzip2 ca-certificates cifs-utils distro-feed-configs dropbear dvb-apps dvb-femon dvbdate dvbsnoop e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-tune2fs enigma2 enigma2-plugin-drivers-dvb-usb-tbs enigma2-plugin-extensions-audiosync enigma2-plugin-extensions-autobackup enigma2-plugin-extensions-backupsuite enigma2-plugin-extensions-bitrate enigma2-plugin-extensions-changerootpassword enigma2-plugin-extensions-cooltvguide enigma2-plugin-extensions-cutlisteditor enigma2-plugin-extensions-dreamexplorer enigma2-plugin-extensions-graphmultiepg enigma2-plugin-extensions-infobarweather enigma2-plugin-extensions-mediaplayer enigma2-plugin-extensions-mediascanner enigma2-plugin-extensions-moviecut enigma2-plugin-extensions-openwebif enigma2-plugin-extensions-pictureplayer enigma2-plugin-extensions-ppanel enigma2-plugin-extensions-raedquicksignal enigma2-plugin-extensions-ts-sateditor enigma2-plugin-extensions-weathermsn enigma2-plugin-extensions-youtube enigma2-plugin-skins-glamouraurafhd enigma2-plugin-systemplugins-blindscan enigma2-plugin-systemplugins-hdmicec enigma2-plugin-systemplugins-hotplug enigma2-plugin-systemplugins-networkbrowser enigma2-plugin-systemplugins-osdpositionsetup enigma2-plugin-systemplugins-positionersetup enigma2-plugin-systemplugins-satfinder enigma2-plugin-systemplugins-transcodingsetup enigma2-plugin-systemplugins-vfdcontrol enigma2-plugin-systemplugins-videoenhancement enigma2-plugin-systemplugins-videomode enigma2-plugin-systemplugins-videotune enigma2-plugin-systemplugins-wirelesslan exteplayer3 fakelocale ffmpeg firmware-carl9170 firmware-htc7010 firmware-htc9271 firmware-rt2870 firmware-rt73 firmware-rtl8188eu firmware-rtl8192cu firmware-rtl8712u firmware-zd1211 fuse-exfat glibc-binary-localedata-en-gb gpm htop kernel-module-8192eu kernel-module-ath9k-htc kernel-module-carl9170 kernel-module-r8712u kernel-module-rt2500usb kernel-module-rt2800usb kernel-module-rt73usb kernel-module-rtl8187 kernel-module-rtl8192cu kernel-module-zd1211rw kernel-params libavahi-client libcrypto-compat libxcrypt-compat mc modutils-loadscript nfs-utils nfs-utils-client ntp ntpq ofgwrite openpli-bootlogo openresolv openssh-sftp-server opkg packagegroup-base packagegroup-core-boot parted perl procps psutil python3-ipaddress python3-multiprocessing python3-netifaces python3-objgraph python3-pillow python3-pysmb python3-requests python3-six run-postinsts samba-base sdparm settings-autorestore showiframe tnap-extras tuxbox-common tzdata util-linux util-linux-mount v4l-utils vim volatile-media vsftpd wget wscan
+NOTE: /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/usr/bin/opkg --volatile-cache -f /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/opkg.conf -t /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/temp/ipktemp/ -o /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs  --force_postinstall --prefer-arch-to-version   install 3rd-party-feed-configs aio-grab avahi-daemon blindscan-s2 busybox-cron bzip2 ca-certificates cifs-utils distro-feed-configs dropbear dvb-apps dvb-femon dvbdate dvbsnoop e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-tune2fs enigma2 enigma2-plugin-drivers-dvb-usb-tbs enigma2-plugin-extensions-audiosync enigma2-plugin-extensions-autobackup enigma2-plugin-extensions-backupsuite enigma2-plugin-extensions-bitrate enigma2-plugin-extensions-changerootpassword enigma2-plugin-extensions-cooltvguide enigma2-plugin-extensions-cutlisteditor enigma2-plugin-extensions-dreamexplorer enigma2-plugin-extensions-graphmultiepg enigma2-plugin-extensions-infobarweather enigma2-plugin-extensions-mediaplayer enigma2-plugin-extensions-mediascanner enigma2-plugin-extensions-moviecut enigma2-plugin-extensions-openwebif enigma2-plugin-extensions-pictureplayer enigma2-plugin-extensions-ppanel enigma2-plugin-extensions-raedquicksignal enigma2-plugin-extensions-ts-sateditor enigma2-plugin-extensions-weathermsn enigma2-plugin-extensions-youtube enigma2-plugin-skins-glamouraurafhd enigma2-plugin-systemplugins-blindscan enigma2-plugin-systemplugins-hdmicec enigma2-plugin-systemplugins-hotplug enigma2-plugin-systemplugins-networkbrowser enigma2-plugin-systemplugins-osdpositionsetup enigma2-plugin-systemplugins-positionersetup enigma2-plugin-systemplugins-satfinder enigma2-plugin-systemplugins-transcodingsetup enigma2-plugin-systemplugins-vfdcontrol enigma2-plugin-systemplugins-videoenhancement enigma2-plugin-systemplugins-videomode enigma2-plugin-systemplugins-videotune enigma2-plugin-systemplugins-wirelesslan exteplayer3 fakelocale ffmpeg firmware-carl9170 firmware-htc7010 firmware-htc9271 firmware-rt2870 firmware-rt73 firmware-rtl8188eu firmware-rtl8192cu firmware-rtl8712u firmware-zd1211 fuse-exfat glibc-binary-localedata-en-gb gpm htop kernel-module-8192eu kernel-module-ath9k-htc kernel-module-carl9170 kernel-module-r8712u kernel-module-rt2500usb kernel-module-rt2800usb kernel-module-rt73usb kernel-module-rtl8187 kernel-module-rtl8192cu kernel-module-zd1211rw kernel-params libavahi-client libcrypto-compat libxcrypt-compat mc modutils-loadscript nfs-utils nfs-utils-client ntp ntpq ofgwrite openpli-bootlogo openresolv openssh-sftp-server opkg packagegroup-base packagegroup-core-boot parted perl procps psutil python3-ipaddress python3-multiprocessing python3-netifaces python3-objgraph python3-pillow python3-pysmb python3-requests python3-six run-postinsts samba-base sdparm settings-autorestore showiframe tnap-extras tuxbox-common tzdata util-linux util-linux-mount v4l-utils vim volatile-media vsftpd wget wscan
+ERROR: Unable to install packages. Command '/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/recipe-sysroot-native/usr/bin/opkg --volatile-cache -f /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/opkg.conf -t /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/temp/ipktemp/ -o /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs  --force_postinstall --prefer-arch-to-version   install 3rd-party-feed-configs aio-grab avahi-daemon blindscan-s2 busybox-cron bzip2 ca-certificates cifs-utils distro-feed-configs dropbear dvb-apps dvb-femon dvbdate dvbsnoop e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-tune2fs enigma2 enigma2-plugin-drivers-dvb-usb-tbs enigma2-plugin-extensions-audiosync enigma2-plugin-extensions-autobackup enigma2-plugin-extensions-backupsuite enigma2-plugin-extensions-bitrate enigma2-plugin-extensions-changerootpassword enigma2-plugin-extensions-cooltvguide enigma2-plugin-extensions-cutlisteditor enigma2-plugin-extensions-dreamexplorer enigma2-plugin-extensions-graphmultiepg enigma2-plugin-extensions-infobarweather enigma2-plugin-extensions-mediaplayer enigma2-plugin-extensions-mediascanner enigma2-plugin-extensions-moviecut enigma2-plugin-extensions-openwebif enigma2-plugin-extensions-pictureplayer enigma2-plugin-extensions-ppanel enigma2-plugin-extensions-raedquicksignal enigma2-plugin-extensions-ts-sateditor enigma2-plugin-extensions-weathermsn enigma2-plugin-extensions-youtube enigma2-plugin-skins-glamouraurafhd enigma2-plugin-systemplugins-blindscan enigma2-plugin-systemplugins-hdmicec enigma2-plugin-systemplugins-hotplug enigma2-plugin-systemplugins-networkbrowser enigma2-plugin-systemplugins-osdpositionsetup enigma2-plugin-systemplugins-positionersetup enigma2-plugin-systemplugins-satfinder enigma2-plugin-systemplugins-transcodingsetup enigma2-plugin-systemplugins-vfdcontrol enigma2-plugin-systemplugins-videoenhancement enigma2-plugin-systemplugins-videomode enigma2-plugin-systemplugins-videotune enigma2-plugin-systemplugins-wirelesslan exteplayer3 fakelocale ffmpeg firmware-carl9170 firmware-htc7010 firmware-htc9271 firmware-rt2870 firmware-rt73 firmware-rtl8188eu firmware-rtl8192cu firmware-rtl8712u firmware-zd1211 fuse-exfat glibc-binary-localedata-en-gb gpm htop kernel-module-8192eu kernel-module-ath9k-htc kernel-module-carl9170 kernel-module-r8712u kernel-module-rt2500usb kernel-module-rt2800usb kernel-module-rt73usb kernel-module-rtl8187 kernel-module-rtl8192cu kernel-module-zd1211rw kernel-params libavahi-client libcrypto-compat libxcrypt-compat mc modutils-loadscript nfs-utils nfs-utils-client ntp ntpq ofgwrite openpli-bootlogo openresolv openssh-sftp-server opkg packagegroup-base packagegroup-core-boot parted perl procps psutil python3-ipaddress python3-multiprocessing python3-netifaces python3-objgraph python3-pillow python3-pysmb python3-requests python3-six run-postinsts samba-base sdparm settings-autorestore showiframe tnap-extras tuxbox-common tzdata util-linux util-linux-mount v4l-utils vim volatile-media vsftpd wget wscan' returned 255:
+Installing 3rd-party-feed-configs (1.2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/3rd-party-feed-configs_1.2-r0_sf8008.ipk.
+Installing distro-feed-configs (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/distro-feed-configs_1.0-r0_sf8008.ipk.
+Installing enigma2-plugin-extensions-audiosync (git5810+4f7cc6c0+4f7cc6c885) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-extensions-audiosync_git5810+4f7cc6c0+4f7cc6c885-r0_all.ipk.
+Installing enigma2-plugin-extensions-cooltvguide (7.6+git32+c315e980+c315e98d06) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-extensions-cooltvguide_7.6+git32+c315e980+c315e98d06-r0_all.ipk.
+Installing enigma2-plugin-extensions-graphmultiepg (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-extensions-graphmultiepg_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-extensions-mediaplayer (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-extensions-mediaplayer_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-extensions-mediascanner (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-extensions-mediascanner_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-extensions-pictureplayer (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-extensions-pictureplayer_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-extensions-weathermsn (1.3.+git121+0b4e5da0+0b4e5da4f6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-extensions-weathermsn_1.3.+git121+0b4e5da0+0b4e5da4f6-r0_all.ipk.
+Installing enigma2-plugin-skins-glamouraurafhd (6.0.5+git560+580813d0+580813d47a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-skins-glamouraurafhd_6.0.5+git560+580813d0+580813d47a-r0_all.ipk.
+Installing enigma2-plugin-systemplugins-hdmicec (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-systemplugins-hdmicec_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-systemplugins-osdpositionsetup (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-systemplugins-osdpositionsetup_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-systemplugins-positionersetup (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-systemplugins-positionersetup_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-systemplugins-videoenhancement (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-systemplugins-videoenhancement_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-systemplugins-videomode (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-systemplugins-videomode_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing enigma2-plugin-systemplugins-videotune (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-systemplugins-videotune_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing fakelocale (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/fakelocale_1.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing firmware-carl9170 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-carl9170_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-htc7010 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-htc7010_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-htc9271 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-htc9271_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-rt2870 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-rt2870_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-rt73 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-rt73_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-rtl8188eu (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-rtl8188eu_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-rtl8192cu (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-rtl8192cu_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-rtl8712u (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-rtl8712u_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-zd1211 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-zd1211_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing glibc-binary-localedata-en-gb (2.39+git) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/glibc-binary-localedata-en-gb_2.39+git-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing kernel-params (20110114) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/kernel-params_20110114-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing ofgwrite (4.x+git212+e45fdd20+e45fdd21f4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/ofgwrite_4.x+git212+e45fdd20+e45fdd21f4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing openresolv (3.13.1) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/openresolv_3.13.1-r0_all.ipk.
+Installing settings-autorestore (2022092801) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/settings-autorestore_2022092801-r0_all.ipk.
+Installing volatile-media (3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/volatile-media_3-r0_all.ipk.
+Installing base-files (3.0.14) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/base-files_3.0.14-r0_sf8008.ipk.
+Installing base-passwd (3.6.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/base-passwd_3.6.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing update-rc.d (0.8+git0+b8f9501050) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/update-rc.d_0.8+git0+b8f9501050-r0_all.ipk.
+Installing update-alternatives-opkg (0.6.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/update-alternatives-opkg_0.6.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing openssl (3.2.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/openssl_3.2.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing font-valis-enigma (2009.11.12) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/font-valis-enigma_2009.11.12-r0_all.ipk.
+Installing firmware-xc5000c (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-xc5000c_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing alsa-conf (1.2.11) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/alsa-conf_1.2.11-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing enigma-info (6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma-info_6-r0_sf8008.ipk.
+Installing firmware-xc5000 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-xc5000_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing enigma2-plugin-skins-pli-hd (0.1+git2309+05272240+052722467a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-skins-pli-hd_0.1+git2309+05272240+052722467a-r0_all.ipk.
+Installing enigma2-fonts (2020.10.17) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-fonts_2020.10.17-r0_sf8008.ipk.
+Installing firmware-dvb-usb-tbs5925 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-dvb-usb-tbs5925_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-cx231xx (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-cx231xx_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-dvb-usb-tbs5980 (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-dvb-usb-tbs5980_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing enigma2-plugins (git5810+4f7cc6c0+4f7cc6c885) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugins_git5810+4f7cc6c0+4f7cc6c885-r0_all.ipk.
+Installing enigma2-binary-plugins (git35+c51ef420+c51ef42e56) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/enigma2-binary-plugins_git35+c51ef420+c51ef42e56-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing initscripts-functions (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/initscripts-functions_1.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing ncurses-terminfo-base (6.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/ncurses-terminfo-base_6.4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing opkg-arch-config (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/opkg-arch-config_1.0-r0_sf8008.ipk.
+Installing packagegroup-distro-base (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/packagegroup-distro-base_1.0-r0_sf8008.ipk.
+Installing packagegroup-base-ipv6 (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/packagegroup-base-ipv6_1.0-r0_sf8008.ipk.
+Installing partitions-by-name (2.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/partitions-by-name_2.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing firmware-rtl8192eu (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-rtl8192eu_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-rtl8xxxu (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-rtl8xxxu_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing firmware-mt7601u (1.1+git296+4b2b1510+4b2b151e18) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/firmware-mt7601u_1.1+git296+4b2b1510+4b2b151e18-r0_all.ipk.
+Installing octagon-dvb-modules-sf8008 (4.4.35-20250111) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/octagon-dvb-modules-sf8008_4.4.35-20250111-r0_sf8008.ipk.
+Installing octagon-partitions-sf8008 (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/octagon-partitions-sf8008_1.0-20240104_sf8008.ipk.
+Installing netbase (6.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/netbase_6.4-r0_all.ipk.
+Installing tzdata-pacific (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-pacific_2024b-r0_all.ipk.
+Installing tzdata-arctic (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-arctic_2024b-r0_all.ipk.
+Installing tzdata-africa (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-africa_2024b-r0_all.ipk.
+Installing tzdata-misc (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-misc_2024b-r0_all.ipk.
+Installing tzdata-europe (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-europe_2024b-r0_all.ipk.
+Installing tzdata-americas (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-americas_2024b-r0_all.ipk.
+Installing tzdata-atlantic (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-atlantic_2024b-r0_all.ipk.
+Installing tzdata-australia (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-australia_2024b-r0_all.ipk.
+Installing tzdata-antarctica (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-antarctica_2024b-r0_all.ipk.
+Installing tzdata-asia (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-asia_2024b-r0_all.ipk.
+Installing vim-syntax (9.1.0764) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/vim-syntax_9.1.0764-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing vim-common (9.1.0764) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/vim-common_9.1.0764-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing vim-vimrc (9.1.0764) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/vim-vimrc_9.1.0764-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing vim-tutor (9.1.0764) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/vim-tutor_9.1.0764-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing vim-help (9.1.0764) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/vim-help_9.1.0764-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing ldconfig (2.39+git0+dcaf51b41e) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/ldconfig_2.39+git0+dcaf51b41e-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing shadow-securetty (4.6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/shadow-securetty_4.6-r0_sf8008.ipk.
+Installing busybox-udhcpc (1.36.1) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/busybox-udhcpc_1.36.1-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing openssl-conf (3.2.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/openssl-conf_3.2.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing glibc-gconv (2.39+git) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/glibc-gconv_2.39+git-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing python3-twisted-protocols (24.3.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/python3-twisted-protocols_24.3.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing wpa-supplicant-plugins (2.10) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/wpa-supplicant-plugins_2.10-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing init-system-helpers-service (1.66) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/init-system-helpers-service_1.66-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing sysvinit-inittab (2.88dsf) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/sysvinit-inittab_2.88dsf-r6_cortexa15hf-neon-vfpv4.ipk.
+Installing samba-common (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/samba-common_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing alsa-ucm-conf (1.2.11) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/alsa-ucm-conf_1.2.11-r0_all.ipk.
+Installing kernel-image-uimage-4.4.35 (4.4.35) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/kernel-image-uimage-4.4.35_4.4.35-r1_sf8008.ipk.
+Installing alsa-states (0.2.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/alsa-states_0.2.0-r0_sf8008.ipk.
+Installing octagon-loadmodules-hisi3798mv200 (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/octagon-loadmodules-hisi3798mv200_1.0-r0_sf8008.ipk.
+Installing octagon-libreader-hisi3798mv200 (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/octagon-libreader-hisi3798mv200_1.0-r1_sf8008.ipk.
+Installing modutils-initscripts (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/modutils-initscripts_1.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing openpli-bootlogo (20250206) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/openpli-bootlogo_20250206-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing modutils-loadscript (3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/modutils-loadscript_3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing enigma2-plugin-systemplugins-vfdcontrol (git5810+4f7cc6c0+4f7cc6c885) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-systemplugins-vfdcontrol_git5810+4f7cc6c0+4f7cc6c885-r0_all.ipk.
+Installing enigma2-plugin-systemplugins-transcodingsetup (git5810+4f7cc6c0+4f7cc6c885) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-systemplugins-transcodingsetup_git5810+4f7cc6c0+4f7cc6c885-r0_all.ipk.
+Installing enigma2-plugin-systemplugins-blindscan (git5810+4f7cc6c0+4f7cc6c885) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/enigma2-plugin-systemplugins-blindscan_git5810+4f7cc6c0+4f7cc6c885-r0_all.ipk.
+Installing ncurses-terminfo (6.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/ncurses-terminfo_6.4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing init-ifupdown (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/init-ifupdown_1.0-r0_sf8008.ipk.
+Installing tzdata-core (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata-core_2024b-r0_all.ipk.
+Installing libc6 (2.39+git0+dcaf51b41e) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libc6_2.39+git0+dcaf51b41e-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing initscripts (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/initscripts_1.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing kernel-image-4.4.35 (4.4.35) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/kernel-image-4.4.35_4.4.35-r1_sf8008.ipk.
+Installing tzdata (2024b) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/tzdata_2024b-r0_all.ipk.
+Installing libpixman-1-0 (0.42.2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libpixman-1-0_0.42.2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libicudata74 (74-2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libicudata74_74-2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libltdl7 (2.4.7) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libltdl7_2.4.7-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libntfs-3g89 (2022.10.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libntfs-3g89_2022.10.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libogg0 (1.3.5) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libogg0_1.3.5-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing faad2 (2.11.1+git0+216f00e8dd) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/faad2_2.11.1+git0+216f00e8dd-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing opencore-amr (0.1.6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/opencore-amr_0.1.6-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing liborc-0.4-0 (0.4.40) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/liborc-0.4-0_0.4.40-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libcdio19 (2.1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libcdio19_2.1.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libkrb5support0 (1.21.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libkrb5support0_1.21.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdvdread8 (6.1.3-Next-Nexus-Alpha2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdvdread8_6.1.3-Next-Nexus-Alpha2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libudev1 (3.2.14) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libudev1_3.2.14-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libcap-ng (0.8.5) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libcap-ng_0.8.5-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libsmartcols1 (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libsmartcols1_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libtasn1-6 (4.19.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libtasn1-6_4.19.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libgmp10 (6.3.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libgmp10_6.3.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libunistring5 (1.2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libunistring5_1.2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libutil-setid-samba4 (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libutil-setid-samba4_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing libjansson4 (2.14) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libjansson4_2.14-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing sysvinit-pidof (3.04) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/sysvinit-pidof_3.04-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libsdl-1.2-0 (1.2.15) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/libsdl-1.2-0_1.2.15-r0_sf8008.ipk.
+Installing libzstd1 (1.5.5) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libzstd1_1.5.5-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libsolv1 (0.7.28) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libsolv1_0.7.28-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libulockmgr1 (2.9.9) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libulockmgr1_2.9.9-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing fuse-utils (2.9.9) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/fuse-utils_2.9.9-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libasound2 (1.2.11) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libasound2_1.2.11-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing wpa-supplicant-cli (2.10) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/wpa-supplicant-cli_2.10-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing liblzo2-2 (2.10) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/liblzo2-2_2.10-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libwbclient0 (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libwbclient0_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing libpcre2 (10.43) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libpcre2_10.43-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing liblzma5 (5.4.6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/liblzma5_5.4.6-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libmnl0 (1.0.5) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libmnl0_1.0.5-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libpcre1 (8.45) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libpcre1_8.45-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing vim-xxd (9.1.0764) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/vim-xxd_9.1.0764-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-ctrlaltdel (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-ctrlaltdel_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-logger (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-logger_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-whereis (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-whereis_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-blkzone (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-blkzone_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-rtcwake (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-rtcwake_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-setsid (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-setsid_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-kill (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-kill_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-addpart (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-addpart_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-ipcs (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-ipcs_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-readprofile (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-readprofile_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-ipcrm (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-ipcrm_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-blockdev (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-blockdev_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-scriptreplay (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-scriptreplay_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-last (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-last_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-rev (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-rev_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-ipcmk (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-ipcmk_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-fsfreeze (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-fsfreeze_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-delpart (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-delpart_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-setarch (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-setarch_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-mcookie (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-mcookie_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-colrm (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-colrm_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-wall (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-wall_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-chmem (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-chmem_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-utmpdump (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-utmpdump_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-look (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-look_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-fadvise (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-fadvise_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-nsenter (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-nsenter_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-unshare (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-unshare_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-renice (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-renice_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-flock (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-flock_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-agetty (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-agetty_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-hardlink (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-hardlink_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-chrt (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-chrt_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-uclampset (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-uclampset_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-chcpu (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-chcpu_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-namei (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-namei_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-waitpid (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-waitpid_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-write (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-write_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-pivot-root (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-pivot-root_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-ionice (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-ionice_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-colcrt (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-colcrt_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-isosize (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-isosize_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-rename (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-rename_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-fallocate (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-fallocate_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-taskset (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-taskset_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-scriptlive (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-scriptlive_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-hwclock (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-hwclock_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-col (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-col_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-nologin (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-nologin_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-script (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-script_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-mesg (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-mesg_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-switch-root (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-switch-root_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-mkfs (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-mkfs_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-ldattach (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-ldattach_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-pipesz (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-pipesz_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-blkpr (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-blkpr_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-getopt (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-getopt_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-resizepart (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-resizepart_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-choom (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-choom_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libpopt0 (1.19) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libpopt0_1.19-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libtime-basic-samba4 (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libtime-basic-samba4_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing libsamba-cluster-support-samba4 (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libsamba-cluster-support-samba4_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing libsocket-blocking-samba4 (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libsocket-blocking-samba4_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing libtdb1 (1.4.10) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libtdb1_1.4.10-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libsmbd-shim-samba4 (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libsmbd-shim-samba4_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing libreplace-samba4 (4.19.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libreplace-samba4_4.19.8-r3_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-fcntl-lock (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-fcntl-lock_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libproc2-0 (4.0.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libproc2-0_4.0.4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing octagon-buildimage (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/octagon-buildimage_1.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing ntp-tickadj (4.2.8p17) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/ntp-tickadj_4.2.8p17-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libsqlite3-0 (3.45.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libsqlite3-0_3.45.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libevent-2.1-7 (2.1.12) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libevent-2.1-7_2.1.12-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libwrap0 (7.6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libwrap0_7.6-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libnl-3-200 (3.9.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libnl-3-200_3.9.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libtinfo5 (6.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libtinfo5_6.4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing wireless-tools (30.pre9) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/wireless-tools_30.pre9-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libtirpc3 (1.3.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libtirpc3_1.3.4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing mtd-utils (2.1.6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/mtd-utils_2.1.6-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libjpeg62 (3.0.1) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libjpeg62_3.0.1-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libgcc1 (13.3.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libgcc1_13.3.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing glibc-gconv-iso8859-15 (2.39+git) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/glibc-gconv-iso8859-15_2.39+git-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing glibc-gconv-cp1250 (2.39+git) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/glibc-gconv-cp1250_2.39+git-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdvdcss2 (1.4.3-Next-Nexus-Alpha2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdvdcss2_1.4.3-Next-Nexus-Alpha2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libcrypto3 (3.2.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libcrypto3_3.2.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing openssl-ossl-module-legacy (3.2.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/openssl-ossl-module-legacy_3.2.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libcrypt2 (4.4.36) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libcrypt2_4.4.36-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing glibc-gconv-utf-16 (2.39+git) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/glibc-gconv-utf-16_2.39+git-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libfribidi0 (1.0.14) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libfribidi0_1.0.14-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libgomp1 (13.3.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libgomp1_13.3.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libgif7 (5.2.2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libgif7_5.2.2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing hotplug-e2-helper (1.0+git14+68eedb20+68eedb242e) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/hotplug-e2-helper_1.0+git14+68eedb20+68eedb242e-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libudfread0 (1.1.2-git108+b3e69360+b3e6936a23) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libudfread0_1.1.2-git108+b3e69360+b3e6936a23-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libe2p2 (1.47.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libe2p2_1.47.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libblkid1 (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libblkid1_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libuuid1 (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libuuid1_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libcom-err2 (1.47.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libcom-err2_1.47.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdvbcfg (1.1.1.20140321) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdvbcfg_1.1.1.20140321-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdvbsec (1.1.1.20140321) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdvbsec_1.1.1.20140321-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libucsi (1.1.1.20140321) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libucsi_1.1.1.20140321-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdvben50221 (1.1.1.20140321) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdvben50221_1.1.1.20140321-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdvbapi (1.1.1.20140321) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdvbapi_1.1.1.20140321-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libz1 (1.3.1) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libz1_1.3.1-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libbz2-1 (1.0.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libbz2-1_1.0.8-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdaemon0 (0.14) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdaemon0_0.14-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libexpat1 (2.6.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libexpat1_2.6.4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libavahi-common3 (0.8) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libavahi-common3_0.8-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing wscan (20210218) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/wscan_20210218-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing tnap-extras (1.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/tnap-extras_1.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing openssh-sftp-server (9.6p1) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/openssh-sftp-server_9.6p1-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libxcrypt-compat (4.4.36) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libxcrypt-compat_4.4.36-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libcrypto-compat (1.0.2u) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libcrypto-compat_1.0.2u-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing enigma2-plugin-systemplugins-satfinder (3.12+git21816+51529f80+51529f8c6a) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/enigma2-plugin-systemplugins-satfinder_3.12+git21816+51529f80+51529f8c6a-r0_sf8008.ipk.
+Installing dvbsnoop (1.4.55+git37+5b236b10+5b236b178e) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/dvbsnoop_1.4.55+git37+5b236b10+5b236b178e-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing cifs-utils (7.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/cifs-utils_7.0-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing blindscan-s2 (1+git19+632830a0+632830aca2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/blindscan-s2_1+git19+632830a0+632830aca2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing kernel-4.4.35 (4.4.35) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/sf8008/kernel-4.4.35_4.4.35-r1_sf8008.ipk.
+Installing libvorbis (1.3.7) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libvorbis_1.3.7-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libflac12 (1.4.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libflac12_1.4.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libk5crypto3 (1.21.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libk5crypto3_1.21.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libdvdnav4 (6.1.1-Next-Nexus-Alpha2-2) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libdvdnav4_6.1.1-Next-Nexus-Alpha2-2-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-setpriv (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-setpriv_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-lsirq (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-lsirq_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-losetup (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-losetup_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-lsipc (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-lsipc_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-prlimit (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-prlimit_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-lsmem (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-lsmem_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-lslogins (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-lslogins_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-fincore (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-fincore_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-wdctl (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-wdctl_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-rfkill (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-rfkill_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-lsfd (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-lsfd_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-lscpu (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-lscpu_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-zramctl (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-zramctl_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing util-linux-column (2.39.3) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/util-linux-column_2.39.3-r0_cortexa15hf-neon-vfpv4.ipk.
+Installi * check_data_file_clashes: Package procps-sysctl wants to install file /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/sysctl.conf
+	But that file is already provided by package  * kernel-params
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/bin/getopt to /bin/getopt.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/switch_root to /sbin/switch_root.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/mesg to /usr/bin/mesg.util-linux
+grep: /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/pam.d/common-password: No such file or directory
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/nologin to /sbin/nologin.util-linux
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/bootlogo.
+ng nettle (3.9.1) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/nettle_3.9.1-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libidn2-0 (2.3.7) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libidn2-0_2.3.7-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing sysvinit (3.04) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/sysvinit_3.04-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing libfuse2 (2.9.9) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/libfuse2_2.9.9-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing alsa-utils-alsactl (1.2.11) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/alsa-utils-alsactl_1.2.11-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing xz (5.4.6) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/xz_5.4.6-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing ethtool (6.7) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/ethtool_6.7-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing run-postinsts (1.0) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/all/run-postinsts_1.0-r0_all.ipk.
+Installing procps-ps (4.0.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/procps-ps_4.0.4-r0_cortexa15hf-neon-vfpv4.ipk.
+Installing procps-sysctl (4.0.4) on root
+Downloading file:/home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/oe-rootfs-repo/cortexa15hf-neon-vfpv4/procps-sysctl_4.0.4-r0_cortexa15hf-neon-vfpv4.ipk.
+To remove package debris, try `opkg remove procps-sysctl`.
+To re-attempt the install, try `opkg install procps-sysctl`.
+Configuring shadow-securetty.
+Configuring ldconfig.
+Configuring libc6.
+Configuring libicudata74.
+Configuring util-linux-choom.
+Configuring libudfread0.
+Configuring libbz2-1.
+Configuring kernel-image-uimage-4.4.35.
+Configuring kernel-image-4.4.35.
+Configuring openssh-sftp-server.
+Configuring util-linux-resizepart.
+Configuring update-alternatives-opkg.
+Configuring util-linux-getopt.
+Configuring font-valis-enigma.
+Configuring libwrap0.
+Configuring util-linux-blkpr.
+Configuring util-linux-pipesz.
+Configuring firmware-xc5000c.
+Configuring libdvbapi.
+Configuring util-linux-ldattach.
+Configuring libogg0.
+Configuring libflac12.
+Configuring enigma2-plugin-extensions-mediascanner.
+Configuring util-linux-mkfs.
+Configuring libcom-err2.
+Configuring util-linux-switch-root.
+Configuring libunistring5.
+Configuring kernel-params.
+Configuring util-linux-mesg.
+Configuring samba-common.
+samba-common.postinst returned 2, marking as unpacked only, configuration required on target.
+Configuring libreplace-samba4.
+Configuring util-linux-script.
+Configuring util-linux-nologin.
+Configuring libcdio19.
+Configuring libsmbd-shim-samba4.
+Configuring libtdb1.
+Configuring util-linux-col.
+Configuring update-rc.d.
+Configuring openpli-bootlogo.
+Configuring busybox-udhcpc.
+Configuring libnl-3-200.
+Configuring enigma2-plugin-extensiupdate-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/hwclock to /sbin/hwclock.util-linux
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/modutils.sh.
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/taskset to /usr/bin/taskset.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/fallocate to /usr/bin/fallocate.util-linux
+depmod: WARNING: could not open modules.builtin.modinfo at /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/lib/modules/4.4.35: No such file or directory
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/ionice to /usr/bin/ionice.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/pivot_root to /sbin/pivot_root.util-linux
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/octagon-libreader.
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/setpriv to /usr/bin/setpriv.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/share/terminfo/s/st to /usr/share/terminfo/s/st.ncurses
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/share/terminfo/s/st-256color to /usr/share/terminfo/s/st-256color.ncurses
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/chrt to /usr/bin/chrt.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/getty to /sbin/agetty
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/flock to /usr/bin/flock.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/renice to /usr/bin/renice.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/unshare to /usr/bin/unshare.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/flashcp to /usr/sbin/flashcp.mtd-utils
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/flash_eraseall to /usr/sbin/flash_eraseall.mtd-utils
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/flash_lock to /usr/sbin/flash_lock.mtd-utils
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/flash_unlock to /usr/sbin/flash_unlock.mtd-utils
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/nanddump to /usr/sbin/nanddump.mtd-utils
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/nandwrite to /usr/sbin/nandwrite.mtd-utils
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/nsenter to /usr/bin/nsenter.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/utmpdump to /usr/bin/utmpdump.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/rfkill to /usr/sbin/rfkill.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/xz to /usr/bin/xz.xz
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/xzcat to /usr/bin/xzcat.xz
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/unxz to /usr/bin/unxz.xz
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/lzma to /usr/bin/lzma.xz
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/lzcat to /usr/bin/lzcat.xz
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/unlzma to /usr/bin/unlzma.xz
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/wall to /usr/bin/wall.util-linux
+ons-pictureplayer.
+Configuring util-linux-hwclock.
+Configuring firmware-rt2870.
+Configuring alsa-states.
+Configuring openssl.
+Configuring tzdata-pacific.
+Configuring libgmp10.
+Configuring nettle.
+Configuring libsolv1.
+Configuring util-linux-scriptlive.
+Configuring firmware-htc7010.
+Configuring hotplug-e2-helper.
+Configuring modutils-initscripts.
+Configuring tzdata-europe.
+Configuring tzdata-core.
+Configuring glibc-binary-localedata-en-gb.
+Configuring initscripts-functions.
+Configuring util-linux-taskset.
+Configuring util-linux-fallocate.
+Configuring libsmartcols1.
+Configuring util-linux-column.
+Configuring kernel-4.4.35.
+Configuring libuuid1.
+Configuring util-linux-rename.
+Configuring partitions-by-name.
+Configuring packagegroup-distro-base.
+Configuring firmware-rtl8192cu.
+Configuring libcap-ng.
+Configuring util-linux-isosize.
+Configuring util-linux-colcrt.
+Configuring base-files.
+Configuring util-linux-ionice.
+Configuring sysvinit-inittab.
+Configuring libntfs-3g89.
+Configuring util-linux-pivot-root.
+Configuring octagon-libreader-hisi3798mv200.
+Configuring util-linux-write.
+Configuring libproc2-0.
+Configuring util-linux-waitpid.
+Configuring wpa-supplicant-cli.
+Configuring 3rd-party-feed-configs.
+Configuring vim-syntax.
+Configuring cifs-utils.
+Configuring tzdata-africa.
+Configuring tzdata-americas.
+Configuring tzdata-antarctica.
+Configuring tzdata-arctic.
+Configuring tzdata-asia.
+Configuring tzdata-atlantic.
+Configuring tzdata-australia.
+Configuring tzdata-misc.
+Configuring tzdata.
+Configuring firmware-rtl8192eu.
+Configuring util-linux-namei.
+Configuring util-linux-setpriv.
+Configuring openssl-conf.
+Configuring tnap-extras.
+Configuring libsocket-blocking-samba4.
+Configuring util-linux-chcpu.
+Configuring init-system-helpers-service.
+Configuring initscripts.
+Configuring enigma2-binary-plugins.
+Configuring ncurses-terminfo-base.
+Configuring ncurses-terminfo.
+Configuring libtinfo5.
+Configuring util-linux-uclampset.
+Configuring util-linux-chrt.
+Configuring firmware-carl9170.
+Configuring libgif7.
+Configuring libzstd1.
+Configuring firmware-rtl8xxxu.
+Configuring fuse-utils.
+Configuring util-linux-zramctl.
+Configuring libdvdread8.
+Configuring libvorbis.
+Configuring enigma2-plugins.
+Configuring enigma2-plugin-systemplugins-transcodingsetup.
+Configuring openresolv.
+Configuring packagegroup-base-ipv6.
+Configuring util-linux-hardlink.
+Configuring util-linux-agetty.
+Configuring util-linux-flock.
+Configuring settings-autorestore.
+Configuring libevent-2.1-7.
+Configuring util-linux-renice.
+Configuring util-linux-unshare.
+Configuring vim-common.
+Configuring libavahi-common3.
+Configuring libblkid1.
+Configuring libmnl0.
+Configuring alsa-conf.
+Configuring libsdl-1.2-0.
+Configuring libsamba-cluster-support-samba4.
+Configuring libsqlite3-0.
+Configuring firmware-rtl8712u.
+Configuring mtd-utils.
+Configuring glibc-gconv.
+Configuring wscan.
+Configuring ethtool.
+Configuring enigma2-plugin-systemplugins-vfdcontrol.
+Configuring util-linux-nsenter.
+Configuring enigma-info.
+Configuring util-linux-lscpu.
+Configuring util-linux-lsfd.
+Configuring libpcre1.
+Configuring libpcre2.
+Configuring libtime-basic-samba4.
+Configuring vim-vimrc.
+Configuring blindscan-s2.
+Configuring firmware-xc5000.
+Configuring util-linux-fadvise.
+Configuring libgomp1.
+Configuring util-linux-look.
+Configuring enigma2-plugin-systemplugins-positionersetup.
+Configuring faad2.
+Configuring enigma2-plugin-skins-pli-hd.
+Configuring opkg-arch-config.
+Configuring libidn2-0.
+Configuring util-linux-utmpdump.
+Configuring util-linux-rfkill.
+Configuring firmware-mt7601u.
+Configuring firmware-rt73.
+Configuring enigma2-fonts.
+Configuring libwbclient0.
+Configuring libfribidi0.
+Configuring util-linux-wdctl.
+Configuring enigma2-plugin-extensions-weathermsn.
+Configuring libcrypto3.
+Configuring openssl-ossl-module-legacy.
+Configuring wpa-supplicant-plugins.
+Configuring util-linux-fincore.
+Configuring firmware-rtl8188eu.
+Configuring octagon-dvb-modules-sf8008.
+Configuring liblzma5.
+Configuring xz.
+Configuring util-linux-chmem.
+Configuring util-linux-wall.
+Configuring base-passwd.
+Configuring glibc-gconv-utupdate-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/mcookie to /usr/bin/mcookie.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/fsfreeze to /usr/sbin/fsfreeze.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/xxd to /usr/bin/xxd.vim
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/bin/pidof to /bin/pidof.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/rev to /usr/bin/rev.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/last to /usr/bin/last.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/lastb to /usr/bin/lastb.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/prlimit to /usr/bin/prlimit.util-linux
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/octagon-loadmodules.
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/scriptreplay to /usr/bin/scriptreplay.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/blockdev to /sbin/blockdev.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/ipcrm to /usr/bin/ipcrm.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/losetup to /sbin/losetup.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/readprofile to /usr/sbin/readprofile.util-linux
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/run-postinsts.
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/bin/ps to /bin/ps.procps
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/networking.
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/ipcs to /usr/bin/ipcs.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/bin/kill to /bin/kill.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/setsid to /usr/bin/setsid.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/sbin/rtcwake to /usr/sbin/rtcwake.util-linux
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/init to /sbin/init.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/bin/mountpoint to /bin/mountpoint.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/halt to /sbin/halt.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/reboot to /sbin/reboot.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/runlevel to /sbin/runlevel.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/shutdown to /sbin/shutdown.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/sbin/poweroff to /sbin/poweroff.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/last to /usr/bin/last.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/lastb to /usr/bin/lastb.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/mesg to /usr/bin/mesg.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/utmpdump to /usr/bin/utmpdump.sysvinit
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/wall to /usr/bin/wall.sysvinit
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/fuse.
+update-alternatives: Linking /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/usr/bin/logger to /usr/bin/logger.util-linux
+ Adding system startup for /home/pli/builds/openpli-scarthgap-build-1-30-2025/openpli-oe-core/build/tmp/work/sf8008-oe-linux-gnueabi/openpli-enigma2-image/1.0/rootfs/etc/init.d/modload.sh.
+f-16.
+Configuring libdvben50221.
+Configuring util-linux-colrm.
+Configuring fakelocale.
+Configuring libulockmgr1.
+Configuring enigma2-plugin-skins-glamouraurafhd.
+Configuring libcrypt2.
+Configuring enigma2-plugin-systemplugins-videoenhancement.
+Configuring ofgwrite.
+Configuring libdvdnav4.
+Configuring libdvdcss2.
+Configuring util-linux-lslogins.
+Configuring enigma2-plugin-systemplugins-videomode.
+Configuring firmware-dvb-usb-tbs5925.
+Configuring util-linux-mcookie.
+Configuring util-linux-setarch.
+Configuring glibc-gconv-cp1250.
+Configuring util-linux-delpart.
+Configuring ntp-tickadj.
+Configuring octagon-partitions-sf8008.
+Configuring firmware-htc9271.
+Configuring libpixman-1-0.
+Configuring util-linux-fsfreeze.
+Configuring enigma2-plugin-systemplugins-osdpositionsetup.
+Configuring vim-xxd.
+Configuring enigma2-plugin-extensions-cooltvguide.
+Configuring util-linux-ipcmk.
+Configuring libcrypto-compat.
+Configuring firmware-cx231xx.
+Configuring distro-feed-configs.
+Configuring firmware-zd1211.
+Configuring vim-tutor.
+Configuring libkrb5support0.
+Configuring util-linux-lsmem.
+Configuring sysvinit-pidof.
+Configuring libucsi.
+Configuring util-linux-rev.
+Configuring util-linux-last.
+Configuring util-linux-prlimit.
+Configuring dvbsnoop.
+Configuring octagon-buildimage.
+Configuring liborc-0.4-0.
+Configuring libz1.
+Configuring octagon-loadmodules-hisi3798mv200.
+Configuring libtasn1-6.
+Configuring netbase.
+Configuring util-linux-lsipc.
+Configuring firmware-dvb-usb-tbs5980.
+Configuring util-linux-scriptreplay.
+Configuring libdvbsec.
+Configuring util-linux-blockdev.
+Configuring glibc-gconv-iso8859-15.
+Configuring libgcc1.
+Configuring enigma2-plugin-extensions-mediaplayer.
+Configuring python3-twisted-protocols.
+Configuring liblzo2-2.
+Configuring libutil-setid-samba4.
+Configuring libdvbcfg.
+Configuring util-linux-ipcrm.
+Configuring libexpat1.
+Configuring libk5crypto3.
+Configuring enigma2-plugin-systemplugins-hdmicec.
+Configuring alsa-ucm-conf.
+Configuring libasound2.
+Configuring alsa-utils-alsactl.
+Configuring libxcrypt-compat.
+Configuring util-linux-losetup.
+Configuring util-linux-fcntl-lock.
+Configuring util-linux-readprofile.
+Configuring run-postinsts.
+Configuring vim-help.
+Configuring procps-ps.
+Configuring init-ifupdown.
+Configuring util-linux-lsirq.
+Configuring util-linux-ipcs.
+Configuring libudev1.
+Configuring libltdl7.
+Configuring util-linux-addpart.
+Configuring libtirpc3.
+Configuring volatile-media.
+Configuring util-linux-kill.
+Configuring util-linux-setsid.
+Configuring util-linux-rtcwake.
+Configuring util-linux-blkzone.
+Configuring enigma2-plugin-extensions-graphmultiepg.
+Configuring libjansson4.
+Configuring sysvinit.
+Configuring libpopt0.
+Configuring wireless-tools.
+Configuring enigma2-plugin-systemplugins-blindscan.
+Configuring libe2p2.
+Configuring libdaemon0.
+Configuring libfuse2.
+Configuring util-linux-whereis.
+Configuring enigma2-plugin-systemplugins-satfinder.
+Configuring libjpeg62.
+Configuring opencore-amr.
+Configuring util-linux-logger.
+Configuring modutils-loadscript.
+Configuring util-linux-ctrlaltdel.
+Configuring enigma2-plugin-systemplugins-videotune.
+Configuring enigma2-plugin-extensions-audiosync.
+
+DEBUG: Python function do_rootfs finished
