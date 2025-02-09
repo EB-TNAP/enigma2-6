@@ -1346,6 +1346,7 @@ def InitNimManager(nimmgr, update_slots=[]):
 		"c_band_5750": _("C-band 5750"),
 		"ka_sat": _("KA-SAT"),
 		"ka_sat_20357": _("KA-SAT-20357MHz"),
+		"unicable": _("SCR (Unicable/JESS)"),
 		"user_defined": _("User defined")}
 
 	lnb_choices_default = "universal_lnb"
