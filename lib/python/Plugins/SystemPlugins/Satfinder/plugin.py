@@ -137,7 +137,7 @@ class Satfinder(ScanSetup, ServiceScan):
 			if dict["tuner_state"] == "FAILED" or dict["tuner_state"] == "LOSTLOCK":
 				self.retune()
 			else:
-				self.timer.start(500, True)
+				self.timer.start(750, True)
 
 	def __onClose(self):
 		self.session.nav.playService(self.session.postScanService)
@@ -338,7 +338,10 @@ class Satfinder(ScanSetup, ServiceScan):
 				self.predefinedATSCTranspondersList()
 				self.preDefTransponderAtscEntry = (_('Transponder'), self.ATSCTransponders)
 				self.list.append(self.preDefTransponderAtscEntry)
-		self["config"].list = self.list
+		# Apply only if there's a change
+		if self["config"].list != self.list:
+			self["config"].list = self.list
+			self["config"].l.setList(self.list)
 
 	def createConfig(self, foo):
 		self.tuning_type = ConfigSelection(default="predefined_transponder", choices=[("single_transponder", _("User defined transponder")), ("predefined_transponder", _("Predefined transponder"))])
@@ -535,12 +538,12 @@ class Satfinder(ScanSetup, ServiceScan):
 			self.retuneCab()
 		elif self.DVB_type.value == "ATSC":
 			self.retuneATSC()
-		self.timer.start(500, True)
+		self.timer.start(750, True)
 
 	def keyGoScan(self):
 		self.frontend = None
 		if self.raw_channel:
-			del (self.raw_channel)
+			self.raw_channel = None
 		tlist = []
 		if self.DVB_type.value == "DVB-S":
 			self.addSatTransponder(tlist,
@@ -881,19 +884,21 @@ class SatfinderExtra(Satfinder):
 				pass
 
 	def monitorTunerLock(self, currentProcess):
+		delay = 1.0
 		while True:
+			if self.currentProcess != currentProcess:
+				return
+			frontendStatus = {}
 			try:
-				if self.currentProcess != currentProcess:
-				    return
-				frontendStatus = {}
 				self.frontend.getFrontendStatus(frontendStatus)
 				if frontendStatus["tuner_state"] != "LOCKED":
-				    print ("[monitorTunerLock] starting again from scratch")
-				    self.getCurrentTsidOnid(False) # if tuner lock fails start again from beginning
-				    return
-				time.sleep(1.0)
-			except:
-				pass
+					print("[monitorTunerLock] Retrying tuner lock check in {:.1f}s".format(delay))
+					time.sleep(delay)
+					delay = min(delay * 1.5, 10)  # Increase delay but cap at 10s
+					continue
+			except Exception as e:
+				print("[monitorTunerLock] Error:", str(e))
+			time.sleep(1.0)  # Final wait if tuner is locked
 
 
 	def keyReadServices(self):
