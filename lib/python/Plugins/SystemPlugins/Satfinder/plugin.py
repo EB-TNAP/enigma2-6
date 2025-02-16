@@ -132,12 +132,13 @@ class Satfinder(ScanSetup, ServiceScan):
 
 	def updateFrontendStatus(self):
 		if self.frontend:
-			dict = {}
-			self.frontend.getFrontendStatus(dict)
-			if dict["tuner_state"] == "FAILED" or dict["tuner_state"] == "LOSTLOCK":
+			status = {}
+			self.frontend.getFrontendStatus(status)
+			if status.get("tuner_state") in ["FAILED", "LOSTLOCK"]:
 				self.retune()
+				self.timer.start(750, True)  # Quick retry on failure
 			else:
-				self.timer.start(750, True)
+				self.timer.start(1500, True)  # Reduce CPU usage
 
 	def __onClose(self):
 		self.session.nav.playService(self.session.postScanService)
@@ -491,15 +492,12 @@ class Satfinder(ScanSetup, ServiceScan):
 				self.tuner.tuneATSC(transponder)
 				self.transponder = transponder
 
-	def retuneSat(self): #satellite
+	def retuneSat(self): 
 		if not self.tuning_sat.value:
 			return
 		satpos = int(self.tuning_sat.value)
 		if self.tuning_type.value == "single_transponder":
-			if self.scan_sat.system.value == eDVBFrontendParametersSatellite.System_DVB_S2:
-				fec = self.scan_sat.fec_s2.value
-			else:
-				fec = self.scan_sat.fec.value
+			fec = self.scan_sat.fec_s2.value if self.scan_sat.system.value == eDVBFrontendParametersSatellite.System_DVB_S2 else self.scan_sat.fec.value
 			transponder = (
 				self.scan_sat.frequency.value,
 				self.scan_sat.symbolrate.value,
@@ -515,7 +513,8 @@ class Satfinder(ScanSetup, ServiceScan):
 				self.scan_sat.pls_mode.value,
 				self.scan_sat.pls_code.value,
 				self.scan_sat.t2mi_plp_id.value,
-				self.scan_sat.t2mi_pid.value)
+				self.scan_sat.t2mi_pid.value
+			)
 			if self.initcomplete:
 				self.tuner.tune(transponder)
 			self.transponder = transponder
@@ -523,11 +522,13 @@ class Satfinder(ScanSetup, ServiceScan):
 			tps = nimmanager.getTransponders(satpos, int(self.satfinder_scan_nims.value))
 			if len(tps) > self.preDefTransponders.index:
 				tp = tps[self.preDefTransponders.index]
-				transponder = (tp[1] // 1000, tp[2] // 1000,
-					tp[3], tp[4], 2, satpos, tp[5], tp[6], tp[8], tp[9], tp[10], tp[11], tp[12], tp[13], tp[14])
+				transponder = (tp[1] // 1000, tp[2] // 1000, tp[3], tp[4], 2, satpos, tp[5], tp[6], tp[8], tp[9], tp[10], tp[11], tp[12], tp[13], tp[14])
 				if self.initcomplete:
 					self.tuner.tune(transponder)
 				self.transponder = transponder
+
+		# Ensure service list is refreshed immediately
+		self.dvb_read_stream()
 
 	def retune(self, configElement=None):
 		if self.DVB_type.value == "DVB-S":
@@ -884,12 +885,12 @@ class SatfinderExtra(Satfinder):
 				pass
 
 	def monitorTunerLock(self, currentProcess):
-		delay = 1.0
+		delay = 1.0  # Start with 1s delay
 		while True:
 			if self.currentProcess != currentProcess:
 				return
-			frontendStatus = {}
 			try:
+				frontendStatus = {}
 				self.frontend.getFrontendStatus(frontendStatus)
 				if frontendStatus["tuner_state"] != "LOCKED":
 					print("[monitorTunerLock] Retrying tuner lock check in {:.1f}s".format(delay))
@@ -906,28 +907,30 @@ class SatfinderExtra(Satfinder):
 			return
 		tv = [1, 17, 22, 25, 31]
 		radio = [2, 10]
-		colors = parameters.get("SatfinderExtraColors", (0x0088FF88, 0x00FF8888, 0x00FFFF00, 0x007799FF, 0x00FFFFFF)) # "FTA", "encrypted", "data", "radio", "default" colors
-		fta_color = Hex2strColor(colors[0])
-		encrypted_color = Hex2strColor(colors[1])
-		data_color = Hex2strColor(colors[2])
-		radio_color = Hex2strColor(colors[3])
-		default_color = Hex2strColor(colors[4])
+		colors = parameters.get("SatfinderExtraColors", (0x0088FF88, 0x00FF8888, 0x00FFFF00, 0x007799FF, 0x00FFFFFF))
+		fta_color, encrypted_color, data_color, radio_color, default_color = colors
 		out = []
-		legend = "{}{}{}:  {}{}{}  {}{}{}  {}{}{}  {}{}{}\n\n{}{}{}\n".format(default_color, _("Key"), default_color, fta_color, _("FTA TV"), default_color, encrypted_color, _("Encrypted TV"), default_color, radio_color, _("Radio"), default_color, data_color, _("Other"), default_color, default_color, _("Channels"), default_color)
-#		out.append("%s%s%s:" % (default_color, _("Channels"), default_color))
+		legend = "{}{}{}:  {}{}{}  {}{}{}  {}{}{}  {}{}{}\n\n{}{}{}\n".format(
+			default_color, _("Key"), default_color,
+			fta_color, _("FTA TV"), default_color,
+			encrypted_color, _("Encrypted TV"), default_color,
+			radio_color, _("Radio"), default_color,
+			data_color, _("Other"), default_color,
+			default_color, _("Channels"), default_color
+		)
+
+		# Precompute service colors to speed up UI rendering
+		service_display = []
 		for service in self.serviceList:
 			fta = "free_ca" in service and service["free_ca"] == 0
-			if service["service_type"] in radio:
-				color = radio_color
-			elif service["service_type"] not in tv: # data/interactive/etc
-				color = data_color
-			elif fta:
-				color = fta_color
-			else:
-				color = encrypted_color
-			out.append("- {}{}{}".format(color, service["service_name"], default_color))
+			color = (
+				radio_color if service["service_type"] in radio else
+				data_color if service["service_type"] not in tv else
+				fta_color if fta else encrypted_color
+			)
+			service_display.append("- {}{}{}".format(color, service["service_name"], default_color))
 
-		self.session.open(ServicesFound, "\n".join(out), legend)
+		self.session.open(ServicesFound, "\n".join(service_display), legend)
 
 
 class ServicesFound(Screen):
