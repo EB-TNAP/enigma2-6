@@ -907,30 +907,28 @@ class SatfinderExtra(Satfinder):
 			return
 		tv = [1, 17, 22, 25, 31]
 		radio = [2, 10]
-		colors = parameters.get("SatfinderExtraColors", (0x0088FF88, 0x00FF8888, 0x00FFFF00, 0x007799FF, 0x00FFFFFF))
-		fta_color, encrypted_color, data_color, radio_color, default_color = colors
+		colors = parameters.get("SatfinderExtraColors", (0x0088FF88, 0x00FF8888, 0x00FFFF00, 0x007799FF, 0x00FFFFFF)) # "FTA", "encrypted", "data", "radio", "default" colors
+		fta_color = Hex2strColor(colors[0])
+		encrypted_color = Hex2strColor(colors[1])
+		data_color = Hex2strColor(colors[2])
+		radio_color = Hex2strColor(colors[3])
+		default_color = Hex2strColor(colors[4])
 		out = []
-		legend = "{}{}{}:  {}{}{}  {}{}{}  {}{}{}  {}{}{}\n\n{}{}{}\n".format(
-			default_color, _("Key"), default_color,
-			fta_color, _("FTA TV"), default_color,
-			encrypted_color, _("Encrypted TV"), default_color,
-			radio_color, _("Radio"), default_color,
-			data_color, _("Other"), default_color,
-			default_color, _("Channels"), default_color
-		)
-
-		# Precompute service colors to speed up UI rendering
-		service_display = []
+		legend = "{}{}{}:  {}{}{}  {}{}{}  {}{}{}  {}{}{}\n\n{}{}{}\n".format(default_color, _("Key"), default_color, fta_color, _("FTA TV"), default_color, encrypted_color, _("Encrypted TV"), default_color, radio_color, _("Radio"), default_color, data_color, _("Other"), default_color, default_color, _("Channels"), default_color)
+#		out.append("%s%s%s:" % (default_color, _("Channels"), default_color))
 		for service in self.serviceList:
 			fta = "free_ca" in service and service["free_ca"] == 0
-			color = (
-				radio_color if service["service_type"] in radio else
-				data_color if service["service_type"] not in tv else
-				fta_color if fta else encrypted_color
-			)
-			service_display.append("- {}{}{}".format(color, service["service_name"], default_color))
+			if service["service_type"] in radio:
+				color = radio_color
+			elif service["service_type"] not in tv: # data/interactive/etc
+				color = data_color
+			elif fta:
+				color = fta_color
+			else:
+				color = encrypted_color
+			out.append("- {}{}{}".format(color, service["service_name"], default_color))
 
-		self.session.open(ServicesFound, "\n".join(service_display), legend)
+		self.session.open(ServicesFound, "\n".join(out), legend)
 
 
 class ServicesFound(Screen):
