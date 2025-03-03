@@ -613,68 +613,64 @@ class Satfinder(ScanSetup, ServiceScan):
 			self.raw_channel = None
 			
 		tlist = []
+		
 		try:
-			# The existing transponder addition code with DVB type checking
+			# Build the transponder list based on DVB type
 			if self.DVB_type.value == "DVB-S":
 				self.addSatTransponder(tlist,
 					self.transponder[0], # frequency
-					# ... rest of parameters
+					self.transponder[1], # sr
+					self.transponder[2], # pol
+					self.transponder[3], # fec
+					self.transponder[4], # inversion
+					self.tuning_sat.orbital_position,
+					self.transponder[6], # system
+					self.transponder[7], # modulation
+					self.transponder[8], # rolloff
+					self.transponder[9], # pilot
+					self.transponder[10],# input stream id
+					self.transponder[11],# pls mode
+					self.transponder[12],# pls code
+					self.transponder[13],# t2mi_plp_id
+					self.transponder[14] # t2mi_pid
 				)
-			# ... other DVB types
-			
+			elif self.DVB_type.value == "DVB-T":
+				parm = buildTerTransponder(
+					self.transponder[1],  # frequency
+					self.transponder[9],  # inversion
+					self.transponder[2],  # bandwidth
+					self.transponder[4],  # fechigh
+					self.transponder[5],  # feclow
+					self.transponder[3],  # modulation
+					self.transponder[7],  # transmission
+					self.transponder[6],  # guard
+					self.transponder[8],  # hierarchy
+					self.transponder[10], # system
+					self.transponder[11]  # plp_id
+				)
+				tlist.append(parm)
+			elif self.DVB_type.value == "DVB-C":
+				self.addCabTransponder(tlist,
+					self.transponder[0], # frequency
+					self.transponder[1], # sr
+					self.transponder[2], # modulation
+					self.transponder[3], # fec_inner
+					self.transponder[4]  # inversion
+				)
+			elif self.DVB_type.value == "ATSC":
+				self.addATSCTransponder(tlist,
+					self.transponder[0], # frequency
+					self.transponder[1], # modulation
+					self.transponder[2], # inversion
+					self.transponder[3]  # system
+				)
+				
+			# Start the scan after the transponder list is completely built
 			self.startScan(tlist, self.feid)
+			
 		except Exception as e:
 			print(f"Error during scan initiation: {e}")
 			self.showError(_("Failed to start scan"))
-		if self.DVB_type.value == "DVB-S":
-			self.addSatTransponder(tlist,
-				self.transponder[0], # frequency
-				self.transponder[1], # sr
-				self.transponder[2], # pol
-				self.transponder[3], # fec
-				self.transponder[4], # inversion
-				self.tuning_sat.orbital_position,
-				self.transponder[6], # system
-				self.transponder[7], # modulation
-				self.transponder[8], # rolloff
-				self.transponder[9], # pilot
-				self.transponder[10],# input stream id
-				self.transponder[11],# pls mode
-				self.transponder[12],# pls code
-				self.transponder[13],# t2mi_plp_id
-				self.transponder[14] # t2mi_pid
-			)
-		elif self.DVB_type.value == "DVB-T":
-			parm = buildTerTransponder(
-				self.transponder[1],  # frequency
-				self.transponder[9],  # inversion
-				self.transponder[2],  # bandwidth
-				self.transponder[4],  # fechigh
-				self.transponder[5],  # feclow
-				self.transponder[3],  # modulation
-				self.transponder[7],  # transmission
-				self.transponder[6],  # guard
-				self.transponder[8],  # hierarchy
-				self.transponder[10], # system
-				self.transponder[11]  # plp_id
-			)
-			tlist.append(parm)
-		elif self.DVB_type.value == "DVB-C":
-			self.addCabTransponder(tlist,
-				self.transponder[0], # frequency
-				self.transponder[1], # sr
-				self.transponder[2], # modulation
-				self.transponder[3], # fec_inner
-				self.transponder[4]  # inversion
-			)
-		elif self.DVB_type.value == "ATSC":
-			self.addATSCTransponder(tlist,
-				self.transponder[0], # frequency
-				self.transponder[1], # modulation
-				self.transponder[2], # inversion
-				self.transponder[3]  # system
-			)
-		self.startScan(tlist, self.feid)
 
 	def startScan(self, tlist, feid):
 		flags = 0
