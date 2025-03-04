@@ -107,10 +107,6 @@ class eDVBScan: public sigc::trackable, public iObject
 	int m_scan_progress;                // Current progress (0-100)
 	int m_scan_progress_total;          // Total number of transponders
 	
-	// Helper methods for optimizing transponder parameters
-	bool optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm);
-	ePtr<iDVBFrontendParameters> optimizeTransponderParams(iDVBFrontendParameters *tp);
-	
 public:
 	// Scan state enum for progress tracking
 	enum scanState {
@@ -144,6 +140,10 @@ public:
 	RESULT getFrontend(ePtr<iDVBFrontend> &);
 	RESULT getCurrentTransponder(ePtr<iDVBFrontendParameters> &);
 	eDVBChannelID getCurrentChannelID() { return m_chid_current; }
+	
+	// Helper methods for optimizing transponder parameters
+	bool optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm);
+	ePtr<iDVBFrontendParameters> optimizeTransponderParams(iDVBFrontendParameters *tp);
 	
 	// New methods for enhanced scanning
 	int getScanProgress();                 // Get progress in percent
