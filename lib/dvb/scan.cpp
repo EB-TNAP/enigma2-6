@@ -31,9 +31,8 @@
 // Define minimum symbol rate supported for DVB-S/S2 (300 symbols/sec)
 #define DVB_S_MIN_SYMBOL_RATE 300
 
-// Debug macros with enhanced information
-#define SCAN_eDebug(x...) do { if (m_scan_debug) eDebug("[eDVBScan] " x); } while(0)
-#define SCAN_eDebugNoNewLineStart(x...) do { if (m_scan_debug) eDebugNoNewLineStart("[eDVBScan] " x); } while(0)
+#define SCAN_eDebug(x...) do { if (m_scan_debug) eDebug(x); } while(0)
+#define SCAN_eDebugNoNewLineStart(x...) do { if (m_scan_debug) eDebugNoNewLineStart(x); } while(0)
 #define SCAN_eDebugNoNewLine(x...) do { if (m_scan_debug) eDebugNoNewLine(x); } while(0)
 
 DEFINE_REF(eDVBScan);
@@ -48,74 +47,41 @@ eDVBScan::eDVBScan(iDVBChannel *channel, bool usePAT, bool debug)
 	,m_flags(0)
 	,m_usePAT(usePAT)
 	,m_scan_debug(debug)
-	,m_tune_timeout_ms(5000) // Default tuning timeout
 {
 	if (m_channel->getDemux(m_demux))
-		SCAN_eDebug("Failed to allocate demux!");
+		SCAN_eDebug("[scan.cpp-#47] failed to allocate demux!");
 	m_channel->connectStateChange(sigc::mem_fun(*this, &eDVBScan::stateChange), m_stateChanged_connection);
-	
-	// Initialize extended symbol rate handling for DVB-S/S2
-	// Configuration can be adjusted in settings if needed
-	m_enable_extended_symbolrate = eConfigManager::getConfigBoolValue("config.usage.extended_symbolrate", true);
 }
 
 eDVBScan::~eDVBScan()
 {
-	// Ensure clean shutdown
-	m_stateChanged_connection.disconnect();
 }
 
 int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTransportStreamID tsid)
 {
-	// Enhanced validation with more explicit checks
-	// Zero ONID is invalid
-	if (onid.get() == 0)
+	if(onid.get() == 0 || (onid.get() == 1 && tsid < 2) || onid.get() >= 0xFF00)
+	{
 		return 0;
-		
-	// Special case for ONID 1 with TSID < 2 - typically invalid
-	if (onid.get() == 1 && tsid < 2)
-		return 0;
-		
-	// Provider-specific ONIDs - typically used for non-standard services
-	if (onid.get() >= 0xFF00)
-		return 0;
-		
-	// Add special case for very small ONIDs that often cause issues
-	if (onid.get() < 10 && orbital_position != 192) // Exclude Astra 19.2E
-		return 0;
-		
+	}
 	return 1;
 }
 
 eDVBNamespace eDVBScan::buildNamespace(eOriginalNetworkID onid, eTransportStreamID tsid, unsigned long hash)
 {
 	int orb_pos = (hash >> 16) & 0xFFFF;
-	
-	// Cable networks handling
 	if (orb_pos == 0xFFFF) // cable
 	{
 		if (eConfigManager::getConfigBoolValue("config.usage.subnetwork_cable", true))
 			hash &= ~0xFFFF;
 	}
-	// Terrestrial networks handling
 	else if (orb_pos == 0xEEEE) // terrestrial
 	{
 		if (eConfigManager::getConfigBoolValue("config.usage.subnetwork_terrestrial", true))
 			hash &= ~0xFFFF;
 	}
-	// Satellite networks - use subnetwork option when available
 	else if (eConfigManager::getConfigBoolValue("config.usage.subnetwork", true)
 		&& isValidONIDTSID(orb_pos, onid, tsid)) // on valid ONIDs, ignore frequency ("sub network") part
 		hash &= ~0xFFFF;
-		
-	// Add special case for detecting transponder loops
-	// Particularly beneficial for DVB-S/S2 when scanning multiple satellite positions
-	if ((hash & 0xFFFF) == 0 && orb_pos != 0xFFFF && orb_pos != 0xEEEE)
-	{
-		// Force unique namespace for zero frequency to avoid scan loops
-		hash |= 0x1;
-	}
-	
 	return eDVBNamespace(hash);
 }
 
@@ -133,8 +99,6 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 		{
 			int type;
 			m_ch_current->getSystem(type);
-			
-			// DVB-T/T2 auto-detection handling
 			if (type == iDVBFrontend::feTerrestrial)
 			{
 				eDVBFrontendParametersTerrestrial parm;
@@ -146,37 +110,7 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 					m_ch_current->setDVBT(parm);
 				}
 			}
-			// Enhanced handling for DVB-S/S2
-			else if (type == iDVBFrontend::feSatellite)
-			{
-				// If we've locked on a transponder, store additional properties
-				// like modulation, FEC, pilot settings for more accurate future scans
-				ePtr<iDVBFrontend> fe;
-				m_channel->getFrontend(fe);
-				if (fe)
-				{
-					eDVBFrontendParametersSatellite parm;
-					m_ch_current->getDVBS(parm);
-					
-					// Check for enhanced parameters that can be read from locked transponder
-					// This is especially important for DVB-S2 transponders
-					ePtr<iDVBTransponderData> transponderData;
-					if (!fe->getTransponderData(transponderData, false))
-					{
-						int system = transponderData->getSystem();
-						if (system == eDVBFrontendParametersSatellite::System_DVB_S2 && 
-							parm.system == eDVBFrontendParametersSatellite::System_DVB_S)
-						{
-							// Update system for auto-detection between DVB-S and DVB-S2
-							parm.system = eDVBFrontendParametersSatellite::System_DVB_S2;
-							m_ch_current->setDVBS(parm);
-						}
-					}
-				}
-			}
 		}
-		
-		// Blindscan handling
 		if (!m_ch_blindscan.empty())
 		{
 			/* update current blindscan iteration channel with scanned parameters */
@@ -203,20 +137,6 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 							parm.frequency = tp->getFrequency();
 							parm.symbol_rate = tp->getSymbolRate();
 							parm.modulation = tp->getModulation();
-							
-							// Enhanced DVB-S/S2 parameters to make scanning more reliable
-							// Especially important for very low symbol rates
-							if (tp->getSystem() == eDVBFrontendParametersSatellite::System_DVB_S2)
-							{
-								parm.rolloff = tp->getRollOff();
-								parm.pilot = tp->getPilot();
-								
-								// For multistream transponders (important for some low SR services)
-								parm.is_id = tp->getIsId();
-								parm.pls_mode = tp->getPlsMode();
-								parm.pls_code = tp->getPlsCode();
-							}
-							
 							feparm->setDVBS(parm);
 							break;
 						}
@@ -259,16 +179,13 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 		}
 		startFilter();
 		m_channel_state = state;
-	} 
-	else if (state == iDVBChannel::state_failed)
+	} else if (state == iDVBChannel::state_failed)
 	{
 		if (m_ch_current && m_channel)
 		{
 			int type;
 			m_ch_current->getSystem(type);
 			m_ch_unavailable.push_back(m_ch_current);
-			
-			// Enhanced DVB-T/T2 handling
 			if (type == iDVBFrontend::feTerrestrial)
 			{
 				eDVBFrontendParametersTerrestrial parm;
@@ -292,56 +209,60 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 					}
 				}
 			}
-			// Enhanced DVB-S/S2 handling for failed locks
-			else if (type == iDVBFrontend::feSatellite && m_enable_extended_symbolrate)
+			// Enhanced handling for DVB-S/S2 with low symbol rates
+			else if (type == iDVBFrontend::feSatellite)
 			{
-				eDVBFrontendParametersSatellite parm;
-				m_ch_current->getDVBS(parm);
+				// See if we should enable special handling for low SR by checking config
+				bool enable_extended_symbolrate = eConfigManager::getConfigBoolValue("config.usage.extended_symbolrate", true);
 				
-				// For low symbol rate transponders, retry with different parameters
-				// This can significantly improve the detection of low SR transponders
-				if (parm.symbol_rate > 0 && parm.symbol_rate <= 5000000)
+				if (enable_extended_symbolrate)
 				{
-					// Try with different FEC settings for low SR
-					ePtr<iDVBFrontend> fe;
-					m_channel->getFrontend(fe);
-					if (fe)
+					eDVBFrontendParametersSatellite parm;
+					m_ch_current->getDVBS(parm);
+					
+					// For low symbol rate transponders, retry with different parameters
+					// This can significantly improve the detection of low SR transponders
+					if (parm.symbol_rate > 0 && parm.symbol_rate <= 5000000)
 					{
-						// Create a variant with Auto FEC which can help with unusual FEC configurations
-						eDVBFrontendParameters eparm;
-						parm.fec = eDVBFrontendParametersSatellite::FEC_Auto;
-						
-						// For DVB-S2, also try different rolloff and pilot settings
-						if (parm.system == eDVBFrontendParametersSatellite::System_DVB_S2)
+						// Try with different FEC settings for low SR
+						ePtr<iDVBFrontend> fe;
+						m_channel->getFrontend(fe);
+						if (fe)
 						{
-							parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-							parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
-						}
-						
-						eparm.setDVBS(parm);
-						ePtr<iDVBFrontendParameters> feparm = new eDVBFrontendParameters(eparm);
-						
-						// Only add if the frontend can support this configuration
-						if (fe->isCompatibleWith(feparm))
-						{
-							SCAN_eDebug("Retrying low SR transponder with adjusted parameters: %d", parm.symbol_rate);
-							addChannelToScan(feparm);
+							// Create a variant with Auto FEC which can help with unusual FEC configurations
+							eDVBFrontendParameters eparm;
+							parm.fec = eDVBFrontendParametersSatellite::FEC_Auto;
+							
+							// For DVB-S2, also try different rolloff and pilot settings
+							if (parm.system == eDVBFrontendParametersSatellite::System_DVB_S2)
+							{
+								parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
+								parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+							}
+							
+							eparm.setDVBS(parm);
+							ePtr<iDVBFrontendParameters> feparm = new eDVBFrontendParameters(eparm);
+							
+							// Only add if the frontend can support this configuration
+							if (fe->isCompatibleWith(feparm))
+							{
+								SCAN_eDebug("Retrying low SR transponder with adjusted parameters: %d", parm.symbol_rate);
+								addChannelToScan(feparm);
+							}
 						}
 					}
 				}
 			}
 		}
-		
-		// Blindscan completion handling
 		if (!m_ch_blindscan.empty())
 		{
 			/* tune failure, this means the blindscan channel iteration run has completed */
-			SCAN_eDebug("Blindscan channel completed");
+			SCAN_eDebug("[scan.cpp-#211] blindscan channel completed");
 			m_ch_blindscan.pop_front();
 		}
 		nextChannel();
 	}
-	/* unavailable will timeout, anyway. */
+			/* unavailable will timeout, anyway. */
 }
 
 RESULT eDVBScan::nextChannel()
@@ -354,7 +275,7 @@ RESULT eDVBScan::nextChannel()
 
 	m_pat_tsid = eTransportStreamID();
 
-	/* check what we need */
+		/* check what we need */
 	m_ready_all = readySDT;
 
 	if (m_flags & scanNetworkSearch)
@@ -369,7 +290,7 @@ RESULT eDVBScan::nextChannel()
 	if (!m_ch_blindscan.empty())
 	{
 		/* keep iterating with the same 'channel' till we get a tune failure */
-		SCAN_eDebug("Blindscan channel iteration");
+		SCAN_eDebug("[scan.cpp-#244] blindscan channel iteration");
 		m_ch_current = m_ch_blindscan.front();
 	}
 	else
@@ -377,7 +298,7 @@ RESULT eDVBScan::nextChannel()
 		m_ch_blindscan_result = NULL;
 		if (m_ch_toScan.empty())
 		{
-			SCAN_eDebug("No Transponders left: %zd Transponders Scanned, %zd Transponders Unavailable, %zd Transponders in /etc/lamedb.",
+			SCAN_eDebug("[scan.cpp-#252] No Transponders left: %zd Transponders Scanned, %zd Transponders Unavailable, %zd Transponders in /etc/lamedb.",
 				m_ch_scanned.size(), m_ch_unavailable.size(), m_new_channels.size());
 			m_event(evtFinish);
 			return -ENOENT;
@@ -398,93 +319,11 @@ RESULT eDVBScan::nextChannel()
 
 	m_channel_state = iDVBChannel::state_idle;
 
-	// Enhanced tuning for DVB-S/S2 - adjust parameters based on the transponder type
-	if (!m_ch_blindscan.empty() || optimizeTuneParameters(m_ch_current))
-	{
-		if (fe->tune(*m_ch_current, !m_ch_blindscan.empty()))
-			return nextChannel();
-	}
-	else
-	{
-		if (fe->tune(*m_ch_current, !m_ch_blindscan.empty()))
-			return nextChannel();
-	}
+	if (fe->tune(*m_ch_current, !m_ch_blindscan.empty()))
+		return nextChannel();
 
 	m_event(evtUpdate);
 	return 0;
-}
-
-// New method to optimize tuning parameters before tuning
-// This helps with very low symbol rates and non-standard configurations
-bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
-{
-	if (!feparm)
-		return false;
-		
-	int system;
-	if (feparm->getSystem(system))
-		return false;
-		
-	// Only optimize for satellite transponders
-	if (system != iDVBFrontend::feSatellite)
-		return false;
-		
-	eDVBFrontendParametersSatellite parm;
-	if (feparm->getDVBS(parm))
-		return false;
-	
-	bool modified = false;
-	
-	// Very low symbol rate handling
-	if (m_enable_extended_symbolrate && parm.symbol_rate > 0 && parm.symbol_rate < 2000000)
-	{
-		// For very low SR transponders, set specific parameters
-		// that improve the tuning performance
-		
-		// Always use auto FEC for low SR
-		if (parm.fec != eDVBFrontendParametersSatellite::FEC_Auto)
-		{
-			parm.fec = eDVBFrontendParametersSatellite::FEC_Auto;
-			modified = true;
-		}
-		
-		// For DVB-S2 ultralow SR
-		if (parm.system == eDVBFrontendParametersSatellite::System_DVB_S2)
-		{
-			// Auto rolloff and pilot detection helps with unusual configurations
-			if (parm.rolloff != eDVBFrontendParametersSatellite::RollOff_auto)
-			{
-				parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-				modified = true;
-			}
-			
-			if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Auto)
-			{
-				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
-				modified = true;
-			}
-			
-			// For ultralow SR (below 1000000), enable longer tuning timeout
-			if (parm.symbol_rate < 1000000)
-			{
-				m_tune_timeout_ms = 8000; // Extended timeout for very low SR
-				SCAN_eDebug("Extended timeout for ultralow SR: %d", parm.symbol_rate);
-			}
-			else
-			{
-				m_tune_timeout_ms = 5000; // Default timeout
-			}
-		}
-	}
-	
-	if (modified)
-	{
-		// Update the parameters with our optimized values
-		feparm->setDVBS(parm);
-		SCAN_eDebug("Optimized tuning parameters for SR: %d", parm.symbol_rate);
-	}
-	
-	return true;
 }
 
 RESULT eDVBScan::startFilter()
@@ -493,7 +332,7 @@ RESULT eDVBScan::startFilter()
 	int system;
 	ASSERT(m_demux);
 
-	/* only start required filters filter */
+			/* only start required filters filter */
 
 	if (m_ready_all & readyPAT)
 		startSDT = m_ready & readyPAT;
