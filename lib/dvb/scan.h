@@ -98,8 +98,31 @@ class eDVBScan: public sigc::trackable, public iObject
 	int m_networkid;
 	bool m_usePAT;
 	bool m_scan_debug;
+	
+	// Extended functionality for low symbol rates
+	bool m_enable_extended_symbolrate;  // Whether to enable extended DVB-S/S2 handling
+	int m_tune_timeout_ms;              // Tuning timeout for special cases
+
+	// Progress tracking
+	int m_scan_progress;                // Current progress (0-100)
+	int m_scan_progress_total;          // Total number of transponders
+	
+	// Helper methods for optimizing transponder parameters
+	bool optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm);
+	ePtr<iDVBFrontendParameters> optimizeTransponderParams(iDVBFrontendParameters *tp);
+	
 public:
-	eDVBScan(iDVBChannel *channel, bool usePAT=true, bool debug=true );
+	// Scan state enum for progress tracking
+	enum scanState {
+		scanStateInit,      // Initial state
+		scanStateStart,     // Scan started
+		scanStateFinish,    // Scan finished
+		scanStateFailed     // Scan failed
+	};
+	
+	scanState m_scan_state;
+
+	eDVBScan(iDVBChannel *channel, bool usePAT=true, bool debug=true);
 	~eDVBScan();
 
 	enum {
@@ -121,6 +144,11 @@ public:
 	RESULT getFrontend(ePtr<iDVBFrontend> &);
 	RESULT getCurrentTransponder(ePtr<iDVBFrontendParameters> &);
 	eDVBChannelID getCurrentChannelID() { return m_chid_current; }
+	
+	// New methods for enhanced scanning
+	int getScanProgress();                 // Get progress in percent
+	int getScanProgressTotal();            // Get total number of transponders
+	scanState getScanState();              // Get current scan state
 };
 
 #endif
