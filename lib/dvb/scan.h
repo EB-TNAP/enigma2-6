@@ -107,7 +107,6 @@ class eDVBScan: public sigc::trackable, public iObject
 	int m_scan_progress;                // Current progress (0-100)
 	int m_scan_progress_total;          // Total number of transponders
 	
-public:
 	// Scan state enum for progress tracking
 	enum scanState {
 		scanStateInit,      // Initial state
@@ -118,6 +117,7 @@ public:
 	
 	scanState m_scan_state;
 
+public:
 	eDVBScan(iDVBChannel *channel, bool usePAT=true, bool debug=true);
 	~eDVBScan();
 
