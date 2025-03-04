@@ -24,6 +24,7 @@
 #include <lib/base/eerror.h>
 #include <lib/base/estring.h>
 #include <lib/dvb/dvb.h>
+#include <lib/dvb/db.h>
 #include <lib/python/python.h>
 #include <errno.h>
 #include "absdiff.h"
