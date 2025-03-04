@@ -145,10 +145,6 @@ public:
 	bool optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm);
 	ePtr<iDVBFrontendParameters> optimizeTransponderParams(iDVBFrontendParameters *tp);
 	
-	// New methods for enhanced scanning
-	int getScanProgress();                 // Get progress in percent
-	int getScanProgressTotal();            // Get total number of transponders
-	scanState getScanState();              // Get current scan state
 };
 
 #endif

@@ -674,6 +674,24 @@ RESULT eDVBScan::startFilter()
 	return 0;
 }
 
+// Implementation of the new public methods
+
+int eDVBScan::getScanProgress()
+{
+	return m_scan_progress;
+}
+
+int eDVBScan::getScanProgressTotal()
+{
+	return m_scan_progress_total;
+}
+
+eDVBScan::scanState eDVBScan::getScanState()
+{
+	return m_scan_state;
+}
+
+
 bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
 {
 	if (!feparm)
