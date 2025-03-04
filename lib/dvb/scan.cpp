@@ -688,20 +688,6 @@ eDVBScan::scanState eDVBScan::getScanState()
 	return m_scan_state;
 }
 
-int eDVBScan::getScanProgress()
-{
-	return m_scan_progress;
-}
-
-int eDVBScan::getScanProgressTotal()
-{
-	return m_scan_progress_total;
-}
-
-eDVBScan::scanState eDVBScan::getScanState()
-{
-	return m_scan_state;
-}
 
 bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
 {
@@ -2909,22 +2895,5 @@ RESULT eDVBScan::getCurrentTransponder(ePtr<iDVBFrontendParameters> &tp)
 	return -1;
 }
 
-// Enhanced scan progress method
-int eDVBScan::getScanProgress()
-{
-	return m_scan_progress;
-}
-
-// Method to get total number of transponders for this scan
-int eDVBScan::getScanProgressTotal()
-{
-	return m_scan_progress_total;
-}
-
-// Current scan state
-eDVBScan::scanState eDVBScan::getScanState()
-{
-	return m_scan_state;
-}
 
 // part 5 end
