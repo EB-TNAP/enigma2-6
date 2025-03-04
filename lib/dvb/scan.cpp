@@ -688,6 +688,163 @@ eDVBScan::scanState eDVBScan::getScanState()
 	return m_scan_state;
 }
 
+int eDVBScan::getScanProgress()
+{
+	return m_scan_progress;
+}
+
+int eDVBScan::getScanProgressTotal()
+{
+	return m_scan_progress_total;
+}
+
+eDVBScan::scanState eDVBScan::getScanState()
+{
+	return m_scan_state;
+}
+
+bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
+{
+	if (!feparm)
+		return false;
+		
+	int system;
+	if (feparm->getSystem(system))
+		return false;
+		
+	// Only optimize for satellite transponders
+	if (system != iDVBFrontend::feSatellite)
+		return false;
+		
+	eDVBFrontendParametersSatellite parm;
+	if (feparm->getDVBS(parm))
+		return false;
+	
+	bool modified = false;
+	
+	// Very low symbol rate handling
+	if (m_enable_extended_symbolrate && parm.symbol_rate > 0 && parm.symbol_rate < 2000000)
+	{
+		// For very low SR transponders, set specific parameters
+		// that improve the tuning performance
+		
+		// Always use auto FEC for low SR
+		if (parm.fec != eDVBFrontendParametersSatellite::FEC_Auto)
+		{
+			parm.fec = eDVBFrontendParametersSatellite::FEC_Auto;
+			modified = true;
+		}
+		
+		// For DVB-S2 ultralow SR
+		if (parm.system == eDVBFrontendParametersSatellite::System_DVB_S2)
+		{
+			// Auto rolloff and pilot detection helps with unusual configurations
+			if (parm.rolloff != eDVBFrontendParametersSatellite::RollOff_auto)
+			{
+				parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
+				modified = true;
+			}
+			
+			if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Auto)
+			{
+				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+				modified = true;
+			}
+			
+			// For ultralow SR (below 1000000), enable longer tuning timeout
+			if (parm.symbol_rate < 1000000)
+			{
+				m_tune_timeout_ms = 8000; // Extended timeout for very low SR
+				SCAN_eDebug("Extended timeout for ultralow SR: %d", parm.symbol_rate);
+			}
+			else
+			{
+				m_tune_timeout_ms = 5000; // Default timeout
+			}
+		}
+	}
+	
+	if (modified)
+	{
+		// Update the parameters with our optimized values
+		feparm->setDVBS(parm);
+		SCAN_eDebug("Optimized tuning parameters for SR: %d", parm.symbol_rate);
+	}
+	
+	return true;
+}
+
+ePtr<iDVBFrontendParameters> eDVBScan::optimizeTransponderParams(iDVBFrontendParameters *tp)
+{
+	if (!tp)
+		return tp;
+		
+	ePtr<iDVBFrontendParameters> result = tp;
+	int system;
+	
+	if (tp->getSystem(system))
+		return result;
+		
+	// Currently we optimize only satellite parameters
+	if (system == iDVBFrontend::feSatellite && m_enable_extended_symbolrate)
+	{
+		eDVBFrontendParametersSatellite parm;
+		if (!tp->getDVBS(parm))
+		{
+			// Handle very low symbol rate transponders
+			if (parm.symbol_rate <= 5000000)
+			{
+				ePtr<eDVBFrontendParameters> new_feparm = new eDVBFrontendParameters;
+				
+				// For low SR, always use auto FEC and modulation
+				parm.fec = eDVBFrontendParametersSatellite::FEC_Auto;
+				
+				// For very low SR, adjust system and parameters
+				if (parm.symbol_rate <= 1000000)
+				{
+					// Very low SRs are typically DVB-S2
+					if (parm.system != eDVBFrontendParametersSatellite::System_DVB_S2)
+					{
+						SCAN_eDebug("Very low SR (%d) - switching to DVB-S2", parm.symbol_rate);
+						parm.system = eDVBFrontendParametersSatellite::System_DVB_S2;
+					}
+					
+					// Use auto settings for low SR optimization
+					parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
+					parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+					
+					// Low SR usually uses 8PSK or QPSK
+					if (parm.modulation == eDVBFrontendParametersSatellite::Modulation_Auto ||
+						parm.modulation == eDVBFrontendParametersSatellite::Modulation_QPSK)
+					{
+						// Leave as is, good for low SR
+					}
+					else
+					{
+						// Reset to Auto for better compatibility
+						parm.modulation = eDVBFrontendParametersSatellite::Modulation_Auto;
+					}
+				}
+				// For S2 transponders, set auto rolloff/pilot
+				else if (parm.system == eDVBFrontendParametersSatellite::System_DVB_S2)
+				{
+					parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
+					parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+				}
+				
+				new_feparm->setDVBS(parm);
+				result = new_feparm;
+				
+				SCAN_eDebug("Optimized transponder: orbital_pos=%d, freq=%d, SR=%d, pol=%d, sys=%d", 
+					parm.orbital_position, parm.frequency, parm.symbol_rate, parm.polarisation, parm.system);
+			}
+		}
+	}
+	
+	return result;
+}
+
+
 // End Part 1
 
 // Part 2 start
