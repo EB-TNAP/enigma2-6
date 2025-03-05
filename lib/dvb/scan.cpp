@@ -54,7 +54,7 @@ eDVBScan::eDVBScan(iDVBChannel *channel, bool usePAT, bool debug)
 	,m_tune_timeout_ms(5000)
 	,m_scan_progress(0)
 	,m_scan_progress_total(0)
-	,m_scan_state(scanStateInit)
+	,m_scan_state(eDVBScan::scanStateInit)
 {
 	if (m_channel->getDemux(m_demux))
 		SCAN_eDebug("Failed to allocate demux!");
@@ -2058,7 +2058,7 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 	// Initialize scan statistics
 	m_scan_progress = 0;
 	m_scan_progress_total = 0;
-	m_scan_state = scanStateInit;
+	m_scan_state = eDVBScan::scanStateInit;
 
 	if (m_flags & scanBlindSearch)
 	{
@@ -2124,7 +2124,7 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 	
 	// Start scanning
 	SCAN_eDebug("Starting scan with %d transponders", m_scan_progress_total);
-	m_scan_state = scanStateStart;
+	m_scan_state = eDVBScan::scanStateStart;
 	nextChannel();
 }
 
