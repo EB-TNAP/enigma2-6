@@ -1,18 +1,18 @@
 // Part 1 Start
 #include <fcntl.h>
 #include <lib/dvb/idvb.h>
-#include <dvbpsi/descriptor.h>       // General descriptors    dvbpsi/pmt.h
-#include <dvbpsi/nit.h>              // Network Information Table    #include <dvbsi++/descriptor_tag.h>
-#include <dvbpsi/sdt.h>              // Service Description Table
-#include <dvbpsi/eit.h>              // Event Information Table
-#include <dvbpsi/pat.h>              // Program Association Table
-#include <dvbpsi/pmt.h>              // Program Map Table
-#include <dvbpsi/cat.h>              // Conditional Access Table
-#include <dvbpsi/bat.h>              // Bouquet Association Table
-#include <dvbpsi/atsc_vct.h>         // Virtual Channel Table (ATSC)
-#include <dvbpsi/atsc_mgt.h>         // Master Guide Table (ATSC)
-#include <dvbpsi/atsc_eit.h>         // Event Information Table (ATSC)
-#include <dvbpsi/atsc_ett.h>         // Extended Text Table (ATSC)
+#include <dvbsi++/descriptor_tag.h>
+#include <dvbsi++/service_descriptor.h>
+#include <dvbsi++/satellite_delivery_system_descriptor.h>
+#include <dvbsi++/s2_satellite_delivery_system_descriptor.h>
+#include <dvbsi++/terrestrial_delivery_system_descriptor.h>
+#include <dvbsi++/t2_delivery_system_descriptor.h>
+#include <dvbsi++/cable_delivery_system_descriptor.h>
+#include <dvbsi++/logical_channel_descriptor.h>
+#include <dvbsi++/ca_identifier_descriptor.h>
+#include <dvbsi++/registration_descriptor.h>
+#include <dvbsi++/extension_descriptor.h>
+#include <dvbsi++/frequency_list_descriptor.h>
 #include <lib/base/nconfig.h> // access to python config
 #include <lib/dvb/specs.h>
 #include <lib/dvb/esection.h>
@@ -28,7 +28,6 @@
 #include <errno.h>
 #include "absdiff.h"
 
-#include "idvb.h"
 
 
 // Define minimum symbol rate supported for DVB-S/S2 (300 symbols/sec)
