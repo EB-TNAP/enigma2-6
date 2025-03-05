@@ -685,7 +685,7 @@ int eDVBScan::getScanProgressTotal()
 	return m_scan_progress_total;
 }
 
-eDVBScan::scanState eDVBScan::getScanState()
+scanState eDVBScan::getScanState()
 {
 	return m_scan_state;
 }
