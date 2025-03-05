@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <lib/dvb/idvb.h>
 #include <dvbpsi/descriptor.h>       // General descriptors    dvbpsi/pmt.h
-#include <dvbpsi/nit.h>              // Network Information Table
+#include <dvbpsi/nit.h>              // Network Information Table    #include <dvbsi++/descriptor_tag.h>
 #include <dvbpsi/sdt.h>              // Service Description Table
 #include <dvbpsi/eit.h>              // Event Information Table
 #include <dvbpsi/pat.h>              // Program Association Table
@@ -27,7 +27,7 @@
 #include <lib/python/python.h>
 #include <errno.h>
 #include "absdiff.h"
-#include "scan.h"
+
 #include "idvb.h"
 
 
