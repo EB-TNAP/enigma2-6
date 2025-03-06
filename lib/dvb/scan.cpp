@@ -229,7 +229,55 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 
 RESULT eDVBScan::nextChannel()
 {
-	// ... existing code ...
+	ePtr<iDVBFrontend> fe;
+
+	m_SDT = 0; m_PAT = 0; m_BAT = 0; m_NIT = 0, m_PMT = 0;
+
+	m_ready = 0;
+
+	m_pat_tsid = eTransportStreamID();
+
+		/* check what we need */
+	m_ready_all = readySDT;
+
+	if (m_flags & scanNetworkSearch)
+		m_ready_all |= readyNIT;
+
+	if (m_flags & scanSearchBAT)
+		m_ready_all |= readyBAT;
+
+	if (m_usePAT)
+		m_ready_all |= readyPAT;
+
+	if (!m_ch_blindscan.empty())
+	{
+		/* keep iterating with the same 'channel' till we get a tune failure */
+		SCAN_eDebug("[scan.cpp-#244] blindscan channel iteration");
+		m_ch_current = m_ch_blindscan.front();
+	}
+	else
+	{
+		m_ch_blindscan_result = NULL;
+		if (m_ch_toScan.empty())
+		{
+			SCAN_eDebug("[scan.cpp-#252] No Transponders left: %zd Transponders Scanned, %zd Transponders Unavailable, %zd Transponders in /etc/lamedb.",
+				m_ch_scanned.size(), m_ch_unavailable.size(), m_new_channels.size());
+			m_event(evtFinish);
+			return -ENOENT;
+		}
+
+		m_ch_current = m_ch_toScan.front();
+
+		m_ch_toScan.pop_front();
+	}
+
+	if (m_channel->getFrontend(fe))
+	{
+		m_event(evtFail);
+		return -ENOTSUP;
+	}
+
+	m_chid_current = eDVBChannelID();
 
 	m_channel_state = iDVBChannel::state_idle;
 
