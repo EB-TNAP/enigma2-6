@@ -1,4 +1,4 @@
-// Part 1 Start
+// Part 1a Start
 #include <fcntl.h>
 #include <lib/dvb/idvb.h>
 #include <dvbsi++/descriptor_tag.h>
@@ -64,7 +64,7 @@ eDVBScan::eDVBScan(iDVBChannel *channel, bool usePAT, bool debug)
 eDVBScan::~eDVBScan()
 {
 	// Ensure clean shutdown
-	m_stateChanged_connection.disconnect();
+	m_stateChanged_connection = 0;
 }
 
 int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTransportStreamID tsid)
@@ -151,9 +151,9 @@ bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
 				modified = true;
 			}
 			
-			if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Auto)
+			if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Unknown)
 			{
-				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 				modified = true;
 			}
 			
@@ -173,6 +173,7 @@ bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
 	if (modified)
 	{
 		// Update the parameters with our optimized values
+		feparm = new eDVBFrontendParameters();
 		feparm->setDVBS(parm);
 		SCAN_eDebug("Optimized tuning parameters for SR: %d", parm.symbol_rate);
 	}
@@ -217,7 +218,7 @@ ePtr<iDVBFrontendParameters> eDVBScan::optimizeTransponderParams(iDVBFrontendPar
 					
 					// Use auto settings for low SR optimization
 					parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-					parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+					parm.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 					
 					// Low SR usually uses 8PSK or QPSK
 					if (parm.modulation == eDVBFrontendParametersSatellite::Modulation_Auto ||
@@ -235,7 +236,7 @@ ePtr<iDVBFrontendParameters> eDVBScan::optimizeTransponderParams(iDVBFrontendPar
 				else if (parm.system == eDVBFrontendParametersSatellite::System_DVB_S2)
 				{
 					parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-					parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+					parm.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 				}
 				
 				new_feparm->setDVBS(parm);
@@ -296,7 +297,9 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 						{
 							// Update system for auto-detection between DVB-S and DVB-S2
 							parm.system = eDVBFrontendParametersSatellite::System_DVB_S2;
-							m_ch_current->setDVBS(parm);
+							eDVBFrontendParameters *newparm = new eDVBFrontendParameters();
+							newparm->setDVBS(parm);
+							m_ch_current = newparm;
 						}
 					}
 				}
@@ -440,7 +443,7 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 						if (parm.system == eDVBFrontendParametersSatellite::System_DVB_S2)
 						{
 							parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-							parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+							parm.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 						}
 						
 						eparm.setDVBS(parm);
@@ -468,6 +471,10 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 	}
 	/* unavailable will timeout, anyway. */
 }
+
+// End Part 1a
+
+// Part 1b start
 
 RESULT eDVBScan::nextChannel()
 {
@@ -542,7 +549,7 @@ RESULT eDVBScan::nextChannel()
 				{
 					// Use longer tuning timeout for very low symbol rates
 					SCAN_eDebug("Using extended tuning for low SR transponder: %d", parm.symbol_rate);
-					if (fe->tune(*feparm, !m_ch_blindscan.empty(), m_tune_timeout_ms))
+					if (fe->tune(*feparm, !m_ch_blindscan.empty()))
 					{
 						return nextChannel();
 					}
@@ -733,9 +740,9 @@ bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
 				modified = true;
 			}
 			
-			if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Auto)
+			if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Unknown)
 			{
-				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 				modified = true;
 			}
 			
@@ -762,7 +769,7 @@ bool eDVBScan::optimizeTuneParameters(ePtr<iDVBFrontendParameters> &feparm)
 	return true;
 }
 
-// End Part 1
+// End Part 1b
 
 // Part 2 start
 void eDVBScan::SDTready(int err)
@@ -1065,7 +1072,7 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 				// For S2 + ultralow SR, ensure appropriate settings
 				parm.fec = eDVBFrontendParametersSatellite::FEC_Auto;
 				parm.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+				parm.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 				
 				// Update parameters with optimized values
 				feparm->setDVBS(parm);
@@ -1241,6 +1248,8 @@ int eDVBScan::sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *c
 		{
 			// For frequency, use a range of +/- 2000 kHz (2MHz)
 			if (abs(parm1.frequency - parm2.frequency) > 2000)
+				
+				
 				return 0;
 				
 			// For symbolrate, use a range of +/- 1000 symbols/sec
@@ -1615,7 +1624,7 @@ void eDVBScan::channelDone()
 							if (sat.symbol_rate < 5000000 && m_enable_extended_symbolrate)
 							{
 								sat.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-								sat.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+								sat.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 							}
 							
 							// Preserve stream ID parameters from descriptor
@@ -1661,13 +1670,13 @@ void eDVBScan::channelDone()
 									SCAN_eDebug("Very low SR (%d) - setting system to DVB-S2", sat.symbol_rate);
 									sat.system = eDVBFrontendParametersSatellite::System_DVB_S2;
 									sat.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-									sat.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+									sat.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 								}
 								else if (sat.system == eDVBFrontendParametersSatellite::System_DVB_S2)
 								{
 									// For DVB-S2 transponders with low SR, optimize parameters
 									sat.rolloff = eDVBFrontendParametersSatellite::RollOff_auto;
-									sat.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+									sat.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 								}
 							}
 						}
@@ -2326,9 +2335,9 @@ void eDVBScan::insertInto(iDVBChannelList *db, bool backgroundscanresult)
 							modified = true;
 						}
 						
-						if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Auto)
+						if (parm.pilot != eDVBFrontendParametersSatellite::Pilot_Unknown)
 						{
-							parm.pilot = eDVBFrontendParametersSatellite::Pilot_Auto;
+							parm.pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 							modified = true;
 						}
 					}
