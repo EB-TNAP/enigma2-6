@@ -98,10 +98,6 @@ class eDVBScan: public sigc::trackable, public iObject
 	int m_networkid;
 	bool m_usePAT;
 	bool m_scan_debug;
-
-	bool m_enable_extended_symbolrate;  // Whether to enable extended DVB-S/S2 handling
-	int m_tune_timeout_ms;              // Tuning timeout for special cases
-
 public:
 	eDVBScan(iDVBChannel *channel, bool usePAT=true, bool debug=true );
 	~eDVBScan();

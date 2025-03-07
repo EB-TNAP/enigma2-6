@@ -1,4 +1,3 @@
-// Part 1a Start
 #include <fcntl.h>
 #include <lib/dvb/idvb.h>
 #include <dvbsi++/descriptor_tag.h>
@@ -31,8 +30,6 @@
 #define SCAN_eDebug(x...) do { if (m_scan_debug) eDebug(x); } while(0)
 #define SCAN_eDebugNoNewLineStart(x...) do { if (m_scan_debug) eDebugNoNewLineStart(x); } while(0)
 #define SCAN_eDebugNoNewLine(x...) do { if (m_scan_debug) eDebugNoNewLine(x); } while(0)
-// Define minimum symbol rate supported for DVB-S/S2 (300 symbols/sec)
-#define DVB_S_MIN_SYMBOL_RATE 100
 
 DEFINE_REF(eDVBScan);
 
@@ -44,11 +41,8 @@ eDVBScan::eDVBScan(iDVBChannel *channel, bool usePAT, bool debug)
 	,m_pmt_running(false)
 	,m_abort_current_pmt(false)
 	,m_flags(0)
-	,m_networkid(0)
 	,m_usePAT(usePAT)
 	,m_scan_debug(debug)
-	,m_enable_extended_symbolrate(eConfigManager::getConfigBoolValue("config.usage.extended_symbolrate", true))
-	,m_tune_timeout_ms(5000)
 {
 	if (m_channel->getDemux(m_demux))
 		SCAN_eDebug("[scan.cpp-#47] failed to allocate demux!");
@@ -223,10 +217,6 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 			/* unavailable will timeout, anyway. */
 }
 
-// End Part 1a
-
-// Part 1b start
-
 RESULT eDVBScan::nextChannel()
 {
 	ePtr<iDVBFrontend> fe;
@@ -281,32 +271,7 @@ RESULT eDVBScan::nextChannel()
 
 	m_channel_state = iDVBChannel::state_idle;
 
-	// Check for low symbol rate transponders
-	bool tuningAdjusted = false;
-	
-	// Get system type to see if this is a satellite transponder
-	int system;
-	if (!m_ch_current->getSystem(system) && system == iDVBFrontend::feSatellite)
-	{
-		eDVBFrontendParametersSatellite parm;
-		if (!m_ch_current->getDVBS(parm))
-		{
-			// Enhanced tuning for low SR
-			if (parm.symbol_rate <= 1000000 && m_enable_extended_symbolrate)
-			{
-				// Use longer tuning timeout for very low symbol rates
-				SCAN_eDebug("Using extended tuning for low SR transponder: %d", parm.symbol_rate);
-				if (fe->tune(*m_ch_current, !m_ch_blindscan.empty(), m_tune_timeout_ms))
-				{
-					return nextChannel();
-				}
-				tuningAdjusted = true;
-			}
-		}
-	}
-	
-	// Standard tuning if we didn't do special low SR tuning
-	if (!tuningAdjusted && fe->tune(*m_ch_current, !m_ch_blindscan.empty()))
+	if (fe->tune(*m_ch_current, !m_ch_blindscan.empty()))
 		return nextChannel();
 
 	m_event(evtUpdate);
@@ -423,10 +388,6 @@ RESULT eDVBScan::startFilter()
 	}
 	return 0;
 }
-
-// End Part 1b
-
-// Part 2 start
 
 void eDVBScan::SDTready(int err)
 {
@@ -622,33 +583,19 @@ void eDVBScan::addKnownGoodChannel(const eDVBChannelID &chid, iDVBFrontendParame
 
 void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 {
-	/* check if we don't already have that channel ... */
+		/* check if we don't already have that channel ... */
+
 	int type;
 	feparm->getSystem(type);
 
-	// Enhanced debug output with actual parameters
 	switch(type)
 	{
 	case iDVBFrontend::feSatellite:
 	{
 		eDVBFrontendParametersSatellite parm;
 		feparm->getDVBS(parm);
-		
-		// Special handling for very low symbol rates
-		if (parm.symbol_rate <= DVB_S_MIN_SYMBOL_RATE)
-		{
-			// For ultralow symbol rates, adjust timeout
-			if (m_enable_extended_symbolrate)
-			{
-				m_tune_timeout_ms = 8000; // Extended timeout for very low SR
-				SCAN_eDebug("Setting extended timeout for ultralow SR: %d", parm.symbol_rate);
-			}
-		}
-		else
-		{
-			SCAN_eDebug("Try to add satellite transponder: Orbit %d, Freq %d, SR %d, Pol %d",
-				parm.orbital_position, parm.frequency, parm.symbol_rate, parm.polarisation);
-		}
+		SCAN_eDebug("[scan.cpp-#591] try to add sat %d %d %d %d %d %d",
+			parm.orbital_position, parm.frequency, parm.symbol_rate, parm.polarisation, parm.fec, parm.modulation);
 		break;
 	}
 	case iDVBFrontend::feCable:
@@ -733,10 +680,6 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 		/* otherwise, add it to the todo list. */
 	m_ch_toScan.push_front(feparm); // better.. then the rotor not turning wild from east to west :)
 }
-
-//part 2 end
-
-// part 3 start
 
 int eDVBScan::sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *ch2, bool exact) const
 {
@@ -1216,10 +1159,6 @@ void eDVBScan::channelDone()
 	nextChannel();
 }
 
-//part 3 end
-
-//part 4 start
-
 void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transponders, int flags, int networkid)
 {
 	std::list<ePtr<iDVBFrontendParameters> > *transponderlist = &m_ch_toScan;
@@ -1415,10 +1354,6 @@ void eDVBScan::insertInto(iDVBChannelList *db, bool backgroundscanresult)
 			db->removeServices(chid, *x);
 		}
 	}
-
-// part 4 end
-
-// part 5 start
 
 	for (std::map<eDVBChannelID, ePtr<iDVBFrontendParameters> >::const_iterator
 			ch(m_new_channels.begin()); ch != m_new_channels.end(); ++ch)
@@ -1786,6 +1721,3 @@ RESULT eDVBScan::getCurrentTransponder(ePtr<iDVBFrontendParameters> &tp)
 	tp = 0;
 	return -1;
 }
-
-
-// part 5 end
