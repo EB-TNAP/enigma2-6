@@ -346,14 +346,22 @@ RESULT eDVBScan::startFilter()
 			if (m_SDT->start(m_demux, eDVBSDTSpec()))
 				return -1;
 		}
-		else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
-			return -1;
+		else 
+		{
+			// Try with false first, then true if it fails
+			if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
+			{
+				if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
+					return -1; // Fail only if both attempts fail
+			}
+		}
 		CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
 	}
 
 	if (!(m_ready & readyPAT))
 	{
-		m_PAT = 0;
+		m_PAT = nullptr;  // Ensure pointer safety
+
 		if (m_ready_all & readyPAT)
 		{
 			m_PAT = new eTable<ProgramAssociationSection>;
