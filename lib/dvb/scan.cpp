@@ -341,20 +341,7 @@ RESULT eDVBScan::startFilter()
 				}
 			}
 		}
-		if (tsid == -1)
-		{
-			if (m_SDT->start(m_demux, eDVBSDTSpec()))
-				return -1;
-		}
-		else 
-		{
-			// Try with false first, then true if it fails
-			if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
-			{
-				if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
-					return -1; // Fail only if both attempts fail
-			}
-		}
+
 		CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
 	}
 
