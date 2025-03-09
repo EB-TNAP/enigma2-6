@@ -283,11 +283,6 @@ RESULT eDVBScan::startFilter()
 	int system;
 	ASSERT(m_demux);
 
-			/* only start required filters filter */
-
-	if (m_ready_all & readyPAT)
-		startSDT = m_ready & readyPAT;
-
 	// m_ch_current is not set, when eDVBScan is just used for a SDT update
 	if (!m_ch_current)
 	{
@@ -351,7 +346,7 @@ RESULT eDVBScan::startFilter()
 			if (m_SDT->start(m_demux, eDVBSDTSpec()))
 				return -1;
 		}
-		else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
+		else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
 			return -1;
 		CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
 	}
@@ -630,17 +625,7 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 	{
 		if (sameChannel(*i, feparm))
 		{
-			if (!found_count)
-			{
-				*i = feparm;  // update
-				SCAN_eDebug("[eDVBScan]   update");
-			}
-			else
-			{
-				SCAN_eDebug("[eDVBScan]   remove dupe");
-				m_ch_toScan.erase(i++);
-				continue;
-			}
+			*i = feparm;  // update
 			++found_count;
 		}
 		++i;
@@ -652,23 +637,6 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 		return;
 	}
 
-		/* ... in the list of successfully scanned channels */
-	for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator i(m_ch_scanned.begin()); i != m_ch_scanned.end(); ++i)
-		if (sameChannel(*i, feparm))
-		{
-			SCAN_eDebug("[eDVBScan]   successfully scanned");
-			return;
-		}
-
-		/* ... in the list of unavailable channels */
-	for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator i(m_ch_unavailable.begin()); i != m_ch_unavailable.end(); ++i)
-		if (sameChannel(*i, feparm, true))
-		{
-			SCAN_eDebug("[eDVBScan]   scanned but not available");
-			return;
-		}
-
-		/* ... on the current channel */
 	if (sameChannel(m_ch_current, feparm))
 	{
 		SCAN_eDebug("[scan.cpp-#642]   is current");
@@ -809,9 +777,11 @@ void eDVBScan::channelDone()
 					case SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
 					{
 						if (system != iDVBFrontend::feSatellite)
+							SCAN_eDebug("[scan.cpp-#780] current locked transponder is no satellite transponder!");
 							break; // when current locked transponder is no satellite transponder ignore this descriptor
 
 						SatelliteDeliverySystemDescriptor &d = (SatelliteDeliverySystemDescriptor&)**desc;
+							SCAN_eDebug("[scan.cpp-#784] current locked transponder < 10000 Frequency!");
 						if (d.getFrequency() < 10000)
 							break;
 
@@ -821,8 +791,11 @@ void eDVBScan::channelDone()
 
 						eDVBFrontendParametersSatellite p;
 						m_ch_current->getDVBS(p);
+						sat.orbital_position = p.orbital_position;
+						feparm->setDVBS(sat);
 						addChannelToScan(feparm);
 						break;
+
 					}
 					case EXTENSION_DESCRIPTOR:
 					{
@@ -1138,8 +1111,7 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 		 * The bandwidth defines both the search step as well as the search bandwidth.
 		 */
 
-		SCAN_eDebug("[eDVBScan] blind scan requested");
-		transponderlist = &m_ch_blindscan;
+		SCAN_eDebug("[scan.cpp-#1114] blind scan requested");
 	}
 
 	for (eSmartPtrList<iDVBFrontendParameters>::const_iterator i(known_transponders.begin()); i != known_transponders.end(); ++i)
@@ -1440,6 +1412,7 @@ RESULT eDVBScan::processSDT(eDVBNamespace dvbnamespace, const ServiceDescription
 				{
 					ServiceDescriptor &d = (ServiceDescriptor&)**desc;
 					int servicetype = d.getServiceType();
+
 					ref.setServiceType(servicetype);
 					int tsonid=(sdt.getTransportStreamId() << 16) | sdt.getOriginalNetworkId();
 					service->m_service_name = strip_non_graph(convertDVBUTF8(d.getServiceName(),-1,tsonid,0));
@@ -1609,6 +1582,7 @@ void eDVBScan::getStats(int &transponders_done, int &transponders_total, int &se
 	transponders_done = m_ch_scanned.size() + m_ch_unavailable.size();
 	transponders_total = m_ch_toScan.size() + transponders_done;
 	services = m_new_services.size();
+	SCAN_eDebug("[scan.cpp-#1585] transponders_done = %d of %d Services = %d",  transponders_done, transponders_total, services);
 }
 
 void eDVBScan::getLastServiceName(std::string &last_service_name)
