@@ -776,9 +776,10 @@ void eDVBScan::channelDone()
 					}
 					case SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
 					{
-						if (system != iDVBFrontend::feSatellite)
+						if (system != iDVBFrontend::feSatellite) {
 							SCAN_eDebug("[scan.cpp-#780] current locked transponder is no satellite transponder!");
 							break; // when current locked transponder is no satellite transponder ignore this descriptor
+						}
 
 						SatelliteDeliverySystemDescriptor &d = (SatelliteDeliverySystemDescriptor&)**desc;
 							SCAN_eDebug("[scan.cpp-#784] current locked transponder < 10000 Frequency!");
