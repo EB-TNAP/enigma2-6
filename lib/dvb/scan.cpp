@@ -342,33 +342,44 @@ RESULT eDVBScan::startFilter()
 			}
 		}
 		#ifdef EDISION_MODEL
+			SCAN_eDebug("[scan.cpp] Edision model receiver selected.");
 			// Original snippet for Edision
 			if (tsid == -1)
 			{
+				SCAN_eDebug("[scan.cpp] tsid == -1; using default SDT specification for Edision.");
 				if (m_SDT->start(m_demux, eDVBSDTSpec()))
 					return -1;
 			}
 			else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
 			{
+				SCAN_eDebug("[scan.cpp] tsid != -1; using eDVBSDTSpec(tsid, true) for Edision.");
 				return -1;
 			}
+			SCAN_eDebug("[scan.cpp] Edision SDT configuration completed. (Non-Edision code will not run.)");
 			CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
 		#else
+			SCAN_eDebug("[scan.cpp] Non-Edision receiver model selected.");
 			// Modified snippet for other receiver models
 			if (tsid == -1)
 			{
+				SCAN_eDebug("[scan.cpp] tsid == -1; using default SDT specification for non-Edision receiver.");
 				if (m_SDT->start(m_demux, eDVBSDTSpec()))
 					return -1;
 			}
 			else 
 			{
-				// Try with 'true' first; if that returns true then try with false
+				SCAN_eDebug("[scan.cpp] tsid != -1; attempting to start SDT with eDVBSDTSpec(tsid, true) for non-Edision receiver.");
 				if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
 				{
+					SCAN_eDebug("[scan.cpp] First attempt with true succeeded; trying eDVBSDTSpec(tsid, false) as fallback.");
 					if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
-						return -1; // Return failure only if both attempts fail
+					{
+						SCAN_eDebug("[scan.cpp] Fallback attempt with false also succeeded; returning failure for non-Edision receiver.");
+						return -1;
+					}
 				}
 			}
+			SCAN_eDebug("[scan.cpp] Non-Edision SDT configuration completed.");
 			CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
 		#endif
 	}
