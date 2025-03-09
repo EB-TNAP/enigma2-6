@@ -341,8 +341,36 @@ RESULT eDVBScan::startFilter()
 				}
 			}
 		}
-
-		CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
+		#ifdef EDISION_MODEL
+			// Original snippet for Edision
+			if (tsid == -1)
+			{
+				if (m_SDT->start(m_demux, eDVBSDTSpec()))
+					return -1;
+			}
+			else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
+			{
+				return -1;
+			}
+			CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
+		#else
+			// Modified snippet for other receiver models
+			if (tsid == -1)
+			{
+				if (m_SDT->start(m_demux, eDVBSDTSpec()))
+					return -1;
+			}
+			else 
+			{
+				// Try with 'true' first; if that returns true then try with false
+				if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
+				{
+					if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
+						return -1; // Return failure only if both attempts fail
+				}
+			}
+			CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
+		#endif
 	}
 
 	if (!(m_ready & readyPAT))
