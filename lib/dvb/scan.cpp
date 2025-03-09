@@ -346,7 +346,7 @@ RESULT eDVBScan::startFilter()
 			if (m_SDT->start(m_demux, eDVBSDTSpec()))
 				return -1;
 		}
-		else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
+		else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
 			return -1;
 		CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
 	}
