@@ -390,8 +390,11 @@ RESULT eDVBScan::startFilter()
 		if (m_ready_all & readyPAT)
 		{
 			m_PAT = new eTable<ProgramAssociationSection>;
-			if (m_PAT->start(m_demux, eDVBPATSpec(4000)))
+			if (m_PAT->start(m_demux, eDVBPATSpec(6000)))   //Moved up from 4000
+			{
+				SCAN_eDebug("[scan.cpp#395] PAT->start=6000 Timeout.");
 				return -1;
+			}
 			CONNECT(m_PAT->tableReady, eDVBScan::PATready);
 		}
 
@@ -402,6 +405,7 @@ RESULT eDVBScan::startFilter()
 			if (m_NIT->start(m_demux, eDVBNITSpec(m_networkid)))
 				return -1;
 			CONNECT(m_NIT->tableReady, eDVBScan::NITready);
+			
 		}
 
 		m_BAT = 0;
