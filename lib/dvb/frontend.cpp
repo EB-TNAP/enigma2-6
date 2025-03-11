@@ -1555,25 +1555,10 @@ int eDVBFrontend::readFrontendData(int type)
 								signalquality = calculateSignalPercentage(signalqualitydb);
 							}
 							return signalquality;
-			                if (m_state != stateLock)
-			                {
-				                uint16_t snr = 0;
-				                int signalquality = 0;
-				                int signalqualitydb = 0;
-				                if (!m_simulate)
-					                ioctl(m_fd, FE_READ_SNR, &snr);
-				                if (snr > 0 && snr < 65535)
-				                {
-					                calculateSignalQuality(snr, signalquality, signalqualitydb);
-					                if (type == iFrontendInformation_ENUMS::signalQuality)
-						                return signalquality;
-					                else
-						                return signalqualitydb;
-				                }
-			                }
 						}
 					}
 				}
+
 #endif
 				/* fallback to old DVB API */
 				int snr = readFrontendData(iFrontendInformation_ENUMS::snrValue);
