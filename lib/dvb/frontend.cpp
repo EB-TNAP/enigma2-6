@@ -1454,7 +1454,7 @@ int eDVBFrontend::readFrontendData(int type)
 			break;
 		case iFrontendInformation_ENUMS::signalQuality:
 		case iFrontendInformation_ENUMS::signalQualitydB: /* this moved into the driver on DVB API 5.10 */
-			if (m_state == stateLock)
+			if (m_state == stateLock || eConfigManager::getConfigBoolValue(show_signal_below_lock, true))
 			{
 				int signalquality = 0;
 				int signalqualitydb = 0;
