@@ -65,8 +65,20 @@ int eDVBFrontendStatus::getBER() const
 
 int eDVBFrontendStatus::getSNR() const
 {
-	if (!frontend) return 0;
-	return frontend->readFrontendData(iFrontendInformation_ENUMS::signalQuality);
+    // Check if frontend exists
+    if (!frontend) return 0;
+    
+    // Check if we should show signal when not locked
+    bool showSignalBelowLock = false;
+    char configName[64];
+    sprintf(configName, "config.Nims.%d.show_signal_below_lock", frontend->getSlotID());
+    showSignalBelowLock = eConfigManager::getConfigBoolValue(configName, true); // default to true
+    
+    // Original state check, but with option to bypass
+    if (getState() == iDVBFrontend_ENUMS::stateTuning && !showSignalBelowLock) 
+        return 0;
+        
+    return frontend->readFrontendData(iFrontendInformation_ENUMS::signalQuality);
 }
 
 int eDVBFrontendStatus::getSNRdB() const
