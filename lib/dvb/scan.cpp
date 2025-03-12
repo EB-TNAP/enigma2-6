@@ -654,6 +654,23 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 		return;
 	}
 
+		/* ... in the list of successfully scanned channels */
+	for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator i(m_ch_scanned.begin()); i != m_ch_scanned.end(); ++i)
+		if (sameChannel(*i, feparm))
+		{
+			SCAN_eDebug("[eDVBScan]   successfully scanned");
+			return;
+		}
+
+		/* ... in the list of unavailable channels */
+	for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator i(m_ch_unavailable.begin()); i != m_ch_unavailable.end(); ++i)
+		if (sameChannel(*i, feparm, true))
+		{
+			SCAN_eDebug("[eDVBScan]   scanned but not available");
+			return;
+		}
+
+		/* ... on the current channel */
 	if (sameChannel(m_ch_current, feparm))
 	{
 		SCAN_eDebug("[scan.cpp-#642]   is current");
@@ -1131,6 +1148,12 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 
 		SCAN_eDebug("[scan.cpp-#1114] blind scan requested");
 	}
+
+	if (m_flags & scanRemoveServices)
+	{
+		eDVBDB::getInstance()->resetLcnDB();
+	}
+
 
 	for (eSmartPtrList<iDVBFrontendParameters>::const_iterator i(known_transponders.begin()); i != known_transponders.end(); ++i)
 	{
