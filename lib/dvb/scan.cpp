@@ -804,7 +804,7 @@ void eDVBScan::processTransportStreamDescriptors(
 				
 			case S2_SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
 				processS2SatelliteDeliveryDescriptor(desc, system);
-				// Intentional fallthrough for S2
+				[[fallthrough]]; // Intentional fallthrough to SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR
 				
 			case SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
 				processSatelliteDeliveryDescriptor(desc, system);
@@ -823,7 +823,7 @@ void eDVBScan::processTransportStreamDescriptors(
 				break;
 		}
 	}
-}
+} 
 
 void eDVBScan::processCableDeliveryDescriptor(DescriptorConstIterator desc, int system)
 {
