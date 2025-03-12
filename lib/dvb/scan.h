@@ -88,6 +88,46 @@ class eDVBScan: public sigc::trackable, public iObject
 
 	int sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *ch2, bool exact=false) const;
 
+	// Refactored channelDone helper methods
+	void processSDTSection();
+	void processVCTSection();
+	void processNITSection();
+	void processNITSections(int system);
+	void processTransportStreams(const TransportStreamInfoList &tsinfovec, int system);
+	void processTransportStreamDescriptors(
+		const TransportStreamInfo *tsinfo, 
+		int system, 
+		bool &T2, 
+		eDVBFrontendParametersTerrestrial &t2transponder);
+	void processCableDeliveryDescriptor(DescriptorConstIterator desc, int system);
+	void processTerrestrialDeliveryDescriptor(DescriptorConstIterator desc, int system);
+	void processS2SatelliteDeliveryDescriptor(DescriptorConstIterator desc, int system);
+	void processSatelliteDeliveryDescriptor(DescriptorConstIterator desc, int system);
+	void processExtensionDescriptor(
+		DescriptorConstIterator desc, 
+		int system, 
+		bool &T2, 
+		eDVBFrontendParametersTerrestrial &t2transponder);
+	void processFrequencyListDescriptor(
+		DescriptorConstIterator desc, 
+		int system, 
+		bool T2, 
+		eDVBFrontendParametersTerrestrial &t2transponder);
+	void handleClearToScanFlag(const std::list<ePtr<iDVBFrontendParameters> > &backup);
+	void processCurrentChannel();
+	void processServiceEntry(int type);
+	void setupChannelID();
+	void logServiceTypeInfo();
+	void setupServiceNames(ePtr<eDVBService> &service, int type);
+	void setupSatelliteServiceNames(ePtr<eDVBService> &service, char *sname, char *pname);
+	void setupTerrestrialServiceNames(ePtr<eDVBService> &service, char *sname);
+	void setupCableServiceNames(ePtr<eDVBService> &service, char *sname);
+	void setupATSCServiceNames(ePtr<eDVBService> &service, char *sname);
+	void addServiceToList(const eServiceReferenceDVB &ref, ePtr<eDVBService> &service);
+	void storeChannelFrequencyData(int type);
+	void finalizeChannelProcessing();
+	void checkPMTAndTableCompletion();
+	
 	void channelDone();
 
 	sigc::signal<void(int)> m_event;

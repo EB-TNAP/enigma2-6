@@ -687,12 +687,11 @@ int eDVBScan::sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *c
 	return 0;
 }
 
-void eDVBScan::channelDone()
+void eDVBScan::processSDTSection()
 {
 	if (m_ready & validSDT && (!(m_flags & scanOnlyFree) || !m_pmt_running))
 	{
 		unsigned long hash = 0;
-
 		m_ch_current->getHash(hash);
 
 		eDVBNamespace dvbnamespace = buildNamespace(
@@ -700,17 +699,18 @@ void eDVBScan::channelDone()
 			(**m_SDT->getSections().begin()).getTransportStreamId(),
 			hash);
 
-//		SCAN_eDebug("[scan.cpp-#669] SDT: ");
 		std::vector<ServiceDescriptionSection*>::const_iterator i;
 		for (i = m_SDT->getSections().begin(); i != m_SDT->getSections().end(); ++i)
 			processSDT(dvbnamespace, **i);
 		m_ready &= ~validSDT;
 	}
+}
 
+void eDVBScan::processVCTSection()
+{
 	if (m_ready & validVCT)
 	{
 		unsigned long hash = 0;
-
 		m_ch_current->getHash(hash);
 
 		int onid = 0; /* TODO: ATSC ONID? */
@@ -719,195 +719,511 @@ void eDVBScan::channelDone()
 			(**m_VCT->getSections().begin()).getTransportStreamId(),
 			hash);
 
-		SCAN_eDebug("[scan.cpp-#688] VCT: ");
+		SCAN_eDebug("[scan.cpp] VCT: ");
 		std::vector<VirtualChannelTableSection*>::const_iterator i;
 		for (i = m_VCT->getSections().begin(); i != m_VCT->getSections().end(); ++i)
 			processVCT(dvbnamespace, **i, onid);
 		m_ready &= ~validVCT;
 	}
+}
 
+void eDVBScan::processNITSection()
+{
 	if (m_ready & validNIT)
 	{
 		int system;
 		std::list<ePtr<iDVBFrontendParameters> > m_ch_toScan_backup;
 		m_ch_current->getSystem(system);
-		SCAN_eDebug("[scan.cpp-#701] dumping NIT");
+		SCAN_eDebug("[scan.cpp] dumping NIT");
+		
+		// Handle clearToScanOnFirstNIT flag
 		if (m_flags & clearToScanOnFirstNIT)
 		{
 			m_ch_toScan_backup = m_ch_toScan;
 			m_ch_toScan.clear();
 		}
-		std::vector<NetworkInformationSection*>::const_iterator i;
-		for (i = m_NIT->getSections().begin(); i != m_NIT->getSections().end(); ++i)
-		{
-			if (m_networkid && m_networkid != (*i)->getTableIdExtension()) // in NIT this is the network id
-			{
-				SCAN_eDebug("[scan.cpp-#711] ignoring NetworkId %d!", (*i)->getTableIdExtension());
-				continue;
-			}
-
-			const TransportStreamInfoList &tsinfovec = *(*i)->getTsInfo();
-
-			for (TransportStreamInfoConstIterator tsinfo(tsinfovec.begin());
-				tsinfo != tsinfovec.end(); ++tsinfo)
-			{
-				SCAN_eDebug("[scan.cpp-#720] TSID: %04x ONID: %04x", (*tsinfo)->getTransportStreamId(),
-					(*tsinfo)->getOriginalNetworkId());
-				bool T2 = false;
-				eDVBFrontendParametersTerrestrial t2transponder;
-
-				for (DescriptorConstIterator desc = (*tsinfo)->getDescriptors()->begin();
-						desc != (*tsinfo)->getDescriptors()->end(); ++desc)
-				{
-					switch ((*desc)->getTag())
-					{
-					case CABLE_DELIVERY_SYSTEM_DESCRIPTOR:
-					{
-						if (system != iDVBFrontend::feCable)
-							break; // when current locked transponder is no cable transponder ignore this descriptor
-						CableDeliverySystemDescriptor &d = (CableDeliverySystemDescriptor&)**desc;
-						ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
-						eDVBFrontendParametersCable cable;
-						cable.set(d);
-						feparm->setDVBC(cable);
-
-						addChannelToScan(feparm);
-						break;
-					}
-					case TERRESTRIAL_DELIVERY_SYSTEM_DESCRIPTOR:
-					{
-						if (system != iDVBFrontend::feTerrestrial)
-							break; // when current locked transponder is no terrestrial transponder ignore this descriptor
-						TerrestrialDeliverySystemDescriptor &d = (TerrestrialDeliverySystemDescriptor&)**desc;
-						ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
-						eDVBFrontendParametersTerrestrial terr;
-						terr.set(d);
-						feparm->setDVBT(terr);
-
-						addChannelToScan(feparm);
-						break;
-					}
-					case S2_SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
-					{
-						eDebug("[scan.cpp-#758] S2_SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR found");
-						if (system != iDVBFrontend::feSatellite)
-							break; // when current locked transponder is no satellite transponder ignore this descriptor
-						S2SatelliteDeliverySystemDescriptor &d = (S2SatelliteDeliverySystemDescriptor&)**desc;
-						ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
-						eDVBFrontendParametersSatellite sat;
-						sat.set(d);
-
-						eDVBFrontendParametersSatellite p;
-						m_ch_current->getDVBS(p);
-
-						if (p.is_id != sat.is_id || p.pls_mode != sat.pls_mode || p.pls_code != sat.pls_code)
-						{
-							p.set(d); //set multistream descriptor to current tuned data
-							feparm->setDVBS(p);
-							addChannelToScan(feparm);
-						}
-						[[fallthrough]];
-					}
-					case SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
-					{
-						if (system != iDVBFrontend::feSatellite) {
-							SCAN_eDebug("[scan.cpp-#780] current locked transponder is no satellite transponder!");
-							break; // when current locked transponder is no satellite transponder ignore this descriptor
-						}
-
-						SatelliteDeliverySystemDescriptor &d = (SatelliteDeliverySystemDescriptor&)**desc;
-							SCAN_eDebug("[scan.cpp-#784] current locked transponder < 10000 Frequency!");
-						if (d.getFrequency() < 10000)
-							break;
-
-						ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
-						eDVBFrontendParametersSatellite sat;
-						sat.set(d);
-
-						eDVBFrontendParametersSatellite p;
-						m_ch_current->getDVBS(p);
-						sat.orbital_position = p.orbital_position;
-						feparm->setDVBS(sat);
-						addChannelToScan(feparm);
-						break;
-
-					}
-					case EXTENSION_DESCRIPTOR:
-					{
-						if (system != iDVBFrontend::feTerrestrial)
-							break; // when current locked transponder is no terrestrial transponder ignore this descriptor
-
-						ExtensionDescriptor &d = (ExtensionDescriptor&)**desc;
-						switch (d.getExtensionTag())
-						{
-						case T2_DELIVERY_SYSTEM_DESCRIPTOR:
-							T2 = true;
-							T2DeliverySystemDescriptor &d = (T2DeliverySystemDescriptor&)**desc;
-							t2transponder.set(d);
-
-							for (T2CellConstIterator cell = d.getCells()->begin();
-								cell != d.getCells()->end(); ++cell)
-							{
-								for (T2FrequencyConstIterator freq = (*cell)->getCentreFrequencies()->begin();
-									freq != (*cell)->getCentreFrequencies()->end(); ++freq)
-								{
-									t2transponder.frequency = (*freq) * 10;
-									ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
-									feparm->setDVBT(t2transponder);
-									addChannelToScan(feparm);
-								}
-							}
-						}
-						break;
-					}
-					case FREQUENCY_LIST_DESCRIPTOR:
-					{
-						if (system != iDVBFrontend::feTerrestrial)
-							break; // when current locked transponder is no terrestrial transponder ignore this descriptor
-						if (!T2)
-							break;
-
-						FrequencyListDescriptor &d = (FrequencyListDescriptor&)**desc;
-						if (d.getCodingType() != 0x03)
-							break;
-
-						for (CentreFrequencyConstIterator it = d.getCentreFrequencies()->begin();
-								it != d.getCentreFrequencies()->end(); ++it)
-						{
-							t2transponder.frequency = (*it) * 10;
-							ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
-							feparm->setDVBT(t2transponder);
-							addChannelToScan(feparm);
-						}
-						break;
-					}
-					default:
-						SCAN_eDebug("[scan.cpp-#850] descr<%x>", (*desc)->getTag());
-						break;
-					}
-				}
-			}
-
-		}
-
-			/* a pitfall is to have the clearToScanOnFirstNIT-flag set, and having channels which have
-			   no or invalid NIT. this code will not erase the toScan list unless at least one valid entry
-			   has been found.
-
-			   This is not a perfect solution, as the channel could contain a partial NIT. Life's bad.
-			*/
-		if (m_flags & clearToScanOnFirstNIT)
-		{
-			if (m_ch_toScan.empty())
-			{
-				eWarning("[scan.cpp-#868] clearToScanOnFirstNIT was set, but NIT is invalid. Refusing to stop scan.");
-				m_ch_toScan = m_ch_toScan_backup;
-			} else
-	 			m_flags &= ~clearToScanOnFirstNIT;
- 		}
+		
+		// Process each NIT section
+		processNITSections(system);
+		
+		// Handle potential pitfall with clearToScanOnFirstNIT flag
+		handleClearToScanFlag(m_ch_toScan_backup);
+		
 		m_ready &= ~validNIT;
 	}
+}
 
+void eDVBScan::processNITSections(int system)
+{
+	std::vector<NetworkInformationSection*>::const_iterator i;
+	for (i = m_NIT->getSections().begin(); i != m_NIT->getSections().end(); ++i)
+	{
+		if (m_networkid && m_networkid != (*i)->getTableIdExtension()) // in NIT this is the network id
+		{
+			SCAN_eDebug("[scan.cpp] ignoring NetworkId %d!", (*i)->getTableIdExtension());
+			continue;
+		}
+
+		const TransportStreamInfoList &tsinfovec = *(*i)->getTsInfo();
+		processTransportStreams(tsinfovec, system);
+	}
+}
+
+void eDVBScan::processTransportStreams(const TransportStreamInfoList &tsinfovec, int system)
+{
+	for (TransportStreamInfoConstIterator tsinfo(tsinfovec.begin()); tsinfo != tsinfovec.end(); ++tsinfo)
+	{
+		SCAN_eDebug("[scan.cpp] TSID: %04x ONID: %04x", 
+			(*tsinfo)->getTransportStreamId(), (*tsinfo)->getOriginalNetworkId());
+		
+		bool T2 = false;
+		eDVBFrontendParametersTerrestrial t2transponder;
+
+		processTransportStreamDescriptors(*tsinfo, system, T2, t2transponder);
+	}
+}
+
+void eDVBScan::processTransportStreamDescriptors(
+	const TransportStreamInfo *tsinfo, 
+	int system, 
+	bool &T2, 
+	eDVBFrontendParametersTerrestrial &t2transponder)
+{
+	for (DescriptorConstIterator desc = tsinfo->getDescriptors()->begin();
+			desc != tsinfo->getDescriptors()->end(); ++desc)
+	{
+		switch ((*desc)->getTag())
+		{
+			case CABLE_DELIVERY_SYSTEM_DESCRIPTOR:
+				processCableDeliveryDescriptor(desc, system);
+				break;
+				
+			case TERRESTRIAL_DELIVERY_SYSTEM_DESCRIPTOR:
+				processTerrestrialDeliveryDescriptor(desc, system);
+				break;
+				
+			case S2_SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
+				processS2SatelliteDeliveryDescriptor(desc, system);
+				// Intentional fallthrough for S2
+				
+			case SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
+				processSatelliteDeliveryDescriptor(desc, system);
+				break;
+				
+			case EXTENSION_DESCRIPTOR:
+				processExtensionDescriptor(desc, system, T2, t2transponder);
+				break;
+				
+			case FREQUENCY_LIST_DESCRIPTOR:
+				processFrequencyListDescriptor(desc, system, T2, t2transponder);
+				break;
+				
+			default:
+				SCAN_eDebug("[scan.cpp] descr<%x>", (*desc)->getTag());
+				break;
+		}
+	}
+}
+
+void eDVBScan::processCableDeliveryDescriptor(DescriptorConstIterator desc, int system)
+{
+	if (system != iDVBFrontend::feCable)
+		return; // when current locked transponder is no cable transponder ignore this descriptor
+		
+	CableDeliverySystemDescriptor &d = (CableDeliverySystemDescriptor&)**desc;
+	ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
+	eDVBFrontendParametersCable cable;
+	cable.set(d);
+	feparm->setDVBC(cable);
+
+	addChannelToScan(feparm);
+}
+
+void eDVBScan::processTerrestrialDeliveryDescriptor(DescriptorConstIterator desc, int system)
+{
+	if (system != iDVBFrontend::feTerrestrial)
+		return; // when current locked transponder is no terrestrial transponder ignore this descriptor
+		
+	TerrestrialDeliverySystemDescriptor &d = (TerrestrialDeliverySystemDescriptor&)**desc;
+	ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
+	eDVBFrontendParametersTerrestrial terr;
+	terr.set(d);
+	feparm->setDVBT(terr);
+
+	addChannelToScan(feparm);
+}
+
+void eDVBScan::processS2SatelliteDeliveryDescriptor(DescriptorConstIterator desc, int system)
+{
+	if (system != iDVBFrontend::feSatellite)
+		return; // when current locked transponder is no satellite transponder ignore this descriptor
+		
+	SCAN_eDebug("[scan.cpp] S2_SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR found");
+	S2SatelliteDeliverySystemDescriptor &d = (S2SatelliteDeliverySystemDescriptor&)**desc;
+	ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
+	eDVBFrontendParametersSatellite sat;
+	sat.set(d);
+
+	eDVBFrontendParametersSatellite p;
+	m_ch_current->getDVBS(p);
+
+	if (p.is_id != sat.is_id || p.pls_mode != sat.pls_mode || p.pls_code != sat.pls_code)
+	{
+		p.set(d); //set multistream descriptor to current tuned data
+		feparm->setDVBS(p);
+		addChannelToScan(feparm);
+	}
+}
+
+void eDVBScan::processSatelliteDeliveryDescriptor(DescriptorConstIterator desc, int system)
+{
+	if (system != iDVBFrontend::feSatellite) {
+		SCAN_eDebug("[scan.cpp] current locked transponder is no satellite transponder!");
+		return; // when current locked transponder is no satellite transponder ignore this descriptor
+	}
+
+	SatelliteDeliverySystemDescriptor &d = (SatelliteDeliverySystemDescriptor&)**desc;
+	SCAN_eDebug("[scan.cpp] current locked transponder < 10000 Frequency!");
+	if (d.getFrequency() < 10000)
+		return;
+
+	ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
+	eDVBFrontendParametersSatellite sat;
+	sat.set(d);
+
+	eDVBFrontendParametersSatellite p;
+	m_ch_current->getDVBS(p);
+	sat.orbital_position = p.orbital_position;
+	feparm->setDVBS(sat);
+	addChannelToScan(feparm);
+}
+
+void eDVBScan::processExtensionDescriptor(
+	DescriptorConstIterator desc, 
+	int system, 
+	bool &T2, 
+	eDVBFrontendParametersTerrestrial &t2transponder)
+{
+	if (system != iDVBFrontend::feTerrestrial)
+		return; // when current locked transponder is no terrestrial transponder ignore this descriptor
+
+	ExtensionDescriptor &d = (ExtensionDescriptor&)**desc;
+	switch (d.getExtensionTag())
+	{
+		case T2_DELIVERY_SYSTEM_DESCRIPTOR:
+			T2 = true;
+			T2DeliverySystemDescriptor &d = (T2DeliverySystemDescriptor&)**desc;
+			t2transponder.set(d);
+
+			for (T2CellConstIterator cell = d.getCells()->begin();
+				cell != d.getCells()->end(); ++cell)
+			{
+				for (T2FrequencyConstIterator freq = (*cell)->getCentreFrequencies()->begin();
+					freq != (*cell)->getCentreFrequencies()->end(); ++freq)
+				{
+					t2transponder.frequency = (*freq) * 10;
+					ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
+					feparm->setDVBT(t2transponder);
+					addChannelToScan(feparm);
+				}
+			}
+			break;
+	}
+}
+
+void eDVBScan::processFrequencyListDescriptor(
+	DescriptorConstIterator desc, 
+	int system, 
+	bool T2, 
+	eDVBFrontendParametersTerrestrial &t2transponder)
+{
+	if (system != iDVBFrontend::feTerrestrial)
+		return; // when current locked transponder is no terrestrial transponder ignore this descriptor
+	if (!T2)
+		return;
+
+	FrequencyListDescriptor &d = (FrequencyListDescriptor&)**desc;
+	if (d.getCodingType() != 0x03)
+		return;
+
+	for (CentreFrequencyConstIterator it = d.getCentreFrequencies()->begin();
+			it != d.getCentreFrequencies()->end(); ++it)
+	{
+		t2transponder.frequency = (*it) * 10;
+		ePtr<eDVBFrontendParameters> feparm = new eDVBFrontendParameters;
+		feparm->setDVBT(t2transponder);
+		addChannelToScan(feparm);
+	}
+}
+
+void eDVBScan::handleClearToScanFlag(const std::list<ePtr<iDVBFrontendParameters> > &backup)
+{
+	/* a pitfall is to have the clearToScanOnFirstNIT-flag set, and having channels which have
+	   no or invalid NIT. this code will not erase the toScan list unless at least one valid entry
+	   has been found.
+
+	   This is not a perfect solution, as the channel could contain a partial NIT. Life's bad.
+	*/
+	if (m_flags & clearToScanOnFirstNIT)
+	{
+		if (m_ch_toScan.empty())
+		{
+			eWarning("[scan.cpp] clearToScanOnFirstNIT was set, but NIT is invalid. Refusing to stop scan.");
+			m_ch_toScan = backup;
+		} else
+			m_flags &= ~clearToScanOnFirstNIT;
+	}
+}
+
+void eDVBScan::processCurrentChannel()
+{
+	int type;
+	if (m_ch_current->getSystem(type))
+		type = -1;
+
+	// Process each PMT entry
+	for (m_pmt_in_progress = m_pmts_to_read.begin(); m_pmt_in_progress != m_pmts_to_read.end();)
+	{
+		processServiceEntry(type);
+	}
+
+	// Handle the channel ID
+	if (!m_chid_current)
+		eWarning("[scan.cpp] the current channel's ID was not corrected - not adding channel");
+	else
+	{
+		addKnownGoodChannel(m_chid_current, m_ch_current);
+		if (m_chid_current)
+		{
+			storeChannelFrequencyData(type);
+		}
+	}
+
+	// Add to scanned list and clean up
+	finalizeChannelProcessing();
+}
+
+void eDVBScan::processServiceEntry(int type)
+{
+	eServiceReferenceDVB ref;
+	ePtr<eDVBService> service = new eDVBService;
+
+	// Set up channel ID if needed
+	if (!m_chid_current)
+	{
+		setupChannelID();
+	}
+
+	// Debug the service type
+	logServiceTypeInfo();
+
+	// Set up the service reference
+	ref.set(m_chid_current);
+	ref.setServiceID(m_pmt_in_progress->first);
+	ref.setServiceType(m_pmt_in_progress->second.serviceType);
+
+	// Set service name based on type
+	if (type != -1)
+	{
+		setupServiceNames(service, type);
+	}
+
+	// Add the service if it's not scrambled or we're including scrambled channels
+	if (!(m_flags & scanOnlyFree) || !m_pmt_in_progress->second.scrambled) {
+		addServiceToList(ref, service);
+	}
+	else
+		SCAN_eDebug("[scan.cpp] dont add... is scrambled!");
+		
+	m_pmts_to_read.erase(m_pmt_in_progress++);
+}
+
+void eDVBScan::setupChannelID()
+{
+	unsigned long hash = 0;
+	m_ch_current->getHash(hash);
+
+	m_chid_current = eDVBChannelID(
+		buildNamespace(eOriginalNetworkID(0), m_pat_tsid, hash),
+		m_pat_tsid, eOriginalNetworkID(0));
+}
+
+void eDVBScan::logServiceTypeInfo()
+{
+	if (m_pmt_in_progress->second.serviceType == 1)
+		SCAN_eDebug("[scan.cpp] SID %04x is TV", m_pmt_in_progress->first);
+	else if (m_pmt_in_progress->second.serviceType == 2)
+		SCAN_eDebug("[scan.cpp] SID %04x is Radio", m_pmt_in_progress->first);
+	else
+		SCAN_eDebug("[scan.cpp] SID %04x is DATA, (ServiceType = %04x)", 
+				   m_pmt_in_progress->first, m_pmt_in_progress->second.serviceType);
+}
+
+void eDVBScan::setupServiceNames(ePtr<eDVBService> &service, int type)
+{
+	char sname[255];
+	char pname[255];
+	memset(pname, 0, sizeof(pname));
+	memset(sname, 0, sizeof(sname));
+	
+	switch(type)
+	{
+		case iDVBFrontend::feSatellite:
+			setupSatelliteServiceNames(service, sname, pname);
+			break;
+		case iDVBFrontend::feTerrestrial:
+			setupTerrestrialServiceNames(service, sname);
+			break;
+		case iDVBFrontend::feCable:
+			setupCableServiceNames(service, sname);
+			break;
+		case iDVBFrontend::feATSC:
+			setupATSCServiceNames(service, sname);
+			break;
+	}
+}
+
+void eDVBScan::setupSatelliteServiceNames(ePtr<eDVBService> &service, char *sname, char *pname)
+{
+	eDVBFrontendParametersSatellite parm;
+	m_ch_current->getDVBS(parm);
+	snprintf(sname, 255, "%d%c SID 0x%02x",
+			parm.frequency/1000,
+			parm.polarisation ? 'V' : 'H',
+			m_pmt_in_progress->first);
+	snprintf(pname, 255, "%s %s %d%c %d.%d°%c",
+		parm.system ? "DVB-S2" : "DVB-S",
+		parm.modulation == eDVBFrontendParametersSatellite::Modulation_Auto ? "AUTO" :
+		parm.modulation == eDVBFrontendParametersSatellite::Modulation_QPSK ? "QPSK" :
+		parm.modulation == eDVBFrontendParametersSatellite::Modulation_8PSK ? "8PSK" :
+		parm.modulation == eDVBFrontendParametersSatellite::Modulation_QAM16 ? "QAM16" :
+		parm.modulation == eDVBFrontendParametersSatellite::Modulation_16APSK ? "16APSK" : "32APSK",
+		parm.frequency/1000,
+		parm.polarisation ? 'V' : 'H',
+		parm.orbital_position/10,
+		parm.orbital_position%10,
+		parm.orbital_position > 0 ? 'E' : 'W');
+	
+	SCAN_eDebug("[scan.cpp] name = '%s'", sname);
+	int tsonid = 0;
+	if (m_chid_current)
+		tsonid = (m_chid_current.transport_stream_id.get() << 16) | 
+				m_chid_current.original_network_id.get();
+				
+	service->m_service_name = strip_non_graph(convertDVBUTF8(sname,-1,tsonid,0));
+	service->genSortName();
+	service->m_provider_name = strip_non_graph(convertDVBUTF8(pname,-1,tsonid,0));
+}
+
+void eDVBScan::setupTerrestrialServiceNames(ePtr<eDVBService> &service, char *sname)
+{
+	eDVBFrontendParametersTerrestrial parm;
+	m_ch_current->getDVBT(parm);
+	snprintf(sname, 255, "%d SID 0x%02x",
+		parm.frequency/1000,
+		m_pmt_in_progress->first);
+		
+	SCAN_eDebug("[scan.cpp] name = '%s'", sname);
+	int tsonid = 0;
+	if (m_chid_current)
+		tsonid = (m_chid_current.transport_stream_id.get() << 16) | 
+				m_chid_current.original_network_id.get();
+	
+	service->m_service_name = strip_non_graph(convertDVBUTF8(sname,-1,tsonid,0));
+	service->genSortName();
+}
+
+void eDVBScan::setupCableServiceNames(ePtr<eDVBService> &service, char *sname)
+{
+	eDVBFrontendParametersCable parm;
+	m_ch_current->getDVBC(parm);
+	snprintf(sname, 255, "%d SID 0x%02x",
+		parm.frequency/1000,
+		m_pmt_in_progress->first);
+		
+	SCAN_eDebug("[scan.cpp] name = '%s'", sname);
+	int tsonid = 0;
+	if (m_chid_current)
+		tsonid = (m_chid_current.transport_stream_id.get() << 16) | 
+				m_chid_current.original_network_id.get();
+	
+	service->m_service_name = strip_non_graph(convertDVBUTF8(sname,-1,tsonid,0));
+	service->genSortName();
+}
+
+void eDVBScan::setupATSCServiceNames(ePtr<eDVBService> &service, char *sname)
+{
+	eDVBFrontendParametersATSC parm;
+	m_ch_current->getATSC(parm);
+	snprintf(sname, 255, "%d SID 0x%02x",
+		parm.frequency/1000,
+		m_pmt_in_progress->first);
+		
+	SCAN_eDebug("[scan.cpp] name = '%s'", sname);
+	int tsonid = 0;
+	if (m_chid_current)
+		tsonid = (m_chid_current.transport_stream_id.get() << 16) | 
+				m_chid_current.original_network_id.get();
+	
+	service->m_service_name = strip_non_graph(convertDVBUTF8(sname,-1,tsonid,0));
+	service->genSortName();
+}
+
+void eDVBScan::addServiceToList(const eServiceReferenceDVB &ref, ePtr<eDVBService> &service)
+{
+	m_new_servicerefs.push_back(ref);
+	std::pair<std::map<eServiceReferenceDVB, ePtr<eDVBService> >::iterator, bool> i =
+		m_new_services.insert(std::pair<eServiceReferenceDVB, ePtr<eDVBService> >(ref, service));
+	if (i.second)
+	{
+		m_last_service = i.first;
+		m_event(evtNewService);
+	}
+}
+
+void eDVBScan::storeChannelFrequencyData(int type)
+{
+	switch(type)
+	{
+		case iDVBFrontend::feSatellite:
+		case iDVBFrontend::feTerrestrial:
+		case iDVBFrontend::feCable:
+		case iDVBFrontend::feATSC:
+		{
+			ePtr<iDVBFrontend> fe;
+			if (!m_channel->getFrontend(fe))
+			{
+				int frequency = fe->readFrontendData(iFrontendInformation_ENUMS::frequency);
+				m_tuner_data.insert(std::pair<eDVBChannelID, int>(m_chid_current, frequency));
+			}
+		}
+		default:
+			break;
+	}
+}
+
+void eDVBScan::finalizeChannelProcessing()
+{
+	m_ch_scanned.push_back(m_ch_current);
+
+	// Remove duplicates from the scan list
+	for (std::list<ePtr<iDVBFrontendParameters> >::iterator i(m_ch_toScan.begin()); i != m_ch_toScan.end();)
+	{
+		if (sameChannel(*i, m_ch_current))
+		{
+			SCAN_eDebug("[scan.cpp] remove dupe 2");
+			m_ch_toScan.erase(i++);
+			continue;
+		}
+		++i;
+	}
+
+	// Move to next channel
+	nextChannel();
+}
+
+void eDVBScan::checkPMTAndTableCompletion()
+{
 	if (m_pmt_running || (m_ready & m_ready_all) != m_ready_all)
 	{
 		if (m_abort_current_pmt)
@@ -918,189 +1234,25 @@ void eDVBScan::channelDone()
 		return;
 	}
 
-	SCAN_eDebug("[scan.cpp-#886] Transponder Search Complete!");
-
-		/* if we had services on this channel, we declare
-		   this channels as "known good". add it.
-
-		   (TODO: not yet implemented)
-		   a NIT entry could have possible overridden
-		   our frontend data with more exact data.
-
-		   (TODO: not yet implemented)
-		   the tuning process could have lead to more
-		   exact data than the user entered.
-
-		   The channel id was probably corrected
-		   by the data written in the SDT. this is
-		   important, as "initial transponder lists"
-		   usually don't have valid CHIDs (and that's
-		   good).
-
-		   These are the reasons for adding the transponder
-		   here, and not before.
-		*/
-
-	int type;
-	if (m_ch_current->getSystem(type))
-		type = -1;
-
-	for (m_pmt_in_progress = m_pmts_to_read.begin(); m_pmt_in_progress != m_pmts_to_read.end();)
-	{
-		eServiceReferenceDVB ref;
-		ePtr<eDVBService> service = new eDVBService;
-
-		if (!m_chid_current)
-		{
-			unsigned long hash = 0;
-
-			m_ch_current->getHash(hash);
-
-			m_chid_current = eDVBChannelID(
-				buildNamespace(eOriginalNetworkID(0), m_pat_tsid, hash),
-				m_pat_tsid, eOriginalNetworkID(0));
-		}
-
-		if (m_pmt_in_progress->second.serviceType == 1)
-			SCAN_eDebug("[scan.cpp-#930] SID %04x is TV", m_pmt_in_progress->first);
-		else if (m_pmt_in_progress->second.serviceType == 2)
-			SCAN_eDebug("[scan.cpp-#932] SID %04x is Radio", m_pmt_in_progress->first);
-		else
-			SCAN_eDebug("[scan.cpp-#934] SID %04x is DATA, (ServiceType = %04x)", m_pmt_in_progress->first, m_pmt_in_progress->second.serviceType);
-
-		ref.set(m_chid_current);
-		ref.setServiceID(m_pmt_in_progress->first);
-		ref.setServiceType(m_pmt_in_progress->second.serviceType);
-
-		if (type != -1)
-		{
-			char sname[255];
-			char pname[255];
-			memset(pname, 0, sizeof(pname));
-			memset(sname, 0, sizeof(sname));
-			switch(type)
-			{
-				case iDVBFrontend::feSatellite:
-				{
-					eDVBFrontendParametersSatellite parm;
-					m_ch_current->getDVBS(parm);
-					snprintf(sname, 255, "%d%c SID 0x%02x",
-							parm.frequency/1000,
-							parm.polarisation ? 'V' : 'H',
-							m_pmt_in_progress->first);
-					snprintf(pname, 255, "%s %s %d%c %d.%d°%c",
-						parm.system ? "DVB-S2" : "DVB-S",
-						parm.modulation == eDVBFrontendParametersSatellite::Modulation_Auto ? "AUTO" :
-						parm.modulation == eDVBFrontendParametersSatellite::Modulation_QPSK ? "QPSK" :
-						parm.modulation == eDVBFrontendParametersSatellite::Modulation_8PSK ? "8PSK" :
-						parm.modulation == eDVBFrontendParametersSatellite::Modulation_QAM16 ? "QAM16" :
-						parm.modulation == eDVBFrontendParametersSatellite::Modulation_16APSK ? "16APSK" : "32APSK",
-						parm.frequency/1000,
-						parm.polarisation ? 'V' : 'H',
-						parm.orbital_position/10,
-						parm.orbital_position%10,
-						parm.orbital_position > 0 ? 'E' : 'W');
-					break;
-				}
-				case iDVBFrontend::feTerrestrial:
-				{
-					eDVBFrontendParametersTerrestrial parm;
-					m_ch_current->getDVBT(parm);
-					snprintf(sname, 255, "%d SID 0x%02x",
-						parm.frequency/1000,
-						m_pmt_in_progress->first);
-					break;
-				}
-				case iDVBFrontend::feCable:
-				{
-					eDVBFrontendParametersCable parm;
-					m_ch_current->getDVBC(parm);
-					snprintf(sname, 255, "%d SID 0x%02x",
-						parm.frequency/1000,
-						m_pmt_in_progress->first);
-					break;
-				}
-				case iDVBFrontend::feATSC:
-				{
-					eDVBFrontendParametersATSC parm;
-					m_ch_current->getATSC(parm);
-					snprintf(sname, 255, "%d SID 0x%02x",
-						parm.frequency/1000,
-						m_pmt_in_progress->first);
-					break;
-				}
-			}
-			SCAN_eDebug("[scan.cpp-#998] name = '%s'", sname);
-			int tsonid = 0;
-			if( m_chid_current )
-				tsonid = ( m_chid_current.transport_stream_id.get() << 16 )
-					| m_chid_current.original_network_id.get();
-			service->m_service_name = strip_non_graph(convertDVBUTF8(sname,-1,tsonid,0));
-			service->genSortName();
-			service->m_provider_name = strip_non_graph(convertDVBUTF8(pname,-1,tsonid,0));
-		}
-
-		if (!(m_flags & scanOnlyFree) || !m_pmt_in_progress->second.scrambled) {
-//			SCAN_eDebug("[scan.cpp-#1009] add not scrambled!");
-			m_new_servicerefs.push_back(ref);
-			std::pair<std::map<eServiceReferenceDVB, ePtr<eDVBService> >::iterator, bool> i =
-				m_new_services.insert(std::pair<eServiceReferenceDVB, ePtr<eDVBService> >(ref, service));
-			if (i.second)
-			{
-				m_last_service = i.first;
-				m_event(evtNewService);
-			}
-		}
-		else
-			SCAN_eDebug("[scan.cpp-#1020] dont add... is scrambled!");
-		m_pmts_to_read.erase(m_pmt_in_progress++);
-	}
-
-	if (!m_chid_current)
-		eWarning("[scan.cpp-#1025] the current channel's ID was not corrected - not adding channel");
-	else
-	{
-		addKnownGoodChannel(m_chid_current, m_ch_current);
-		if (m_chid_current)
-		{
-			switch(type)
-			{
-				case iDVBFrontend::feSatellite:
-				case iDVBFrontend::feTerrestrial:
-				case iDVBFrontend::feCable:
-				case iDVBFrontend::feATSC:
-				{
-					ePtr<iDVBFrontend> fe;
-					if (!m_channel->getFrontend(fe))
-					{
-						int frequency = fe->readFrontendData(iFrontendInformation_ENUMS::frequency);
-//						eDebug("[scan.cpp-#1042] add tuner data for tsid %04x, onid %04x, ns %08x",
-//							m_chid_current.transport_stream_id.get(), m_chid_current.original_network_id.get(),
-//							m_chid_current.dvbnamespace.get());
-						m_tuner_data.insert(std::pair<eDVBChannelID, int>(m_chid_current, frequency));
-					}
-				}
-				default:
-					break;
-			}
-		}
-	}
-
-	m_ch_scanned.push_back(m_ch_current);
-
-	for (std::list<ePtr<iDVBFrontendParameters> >::iterator i(m_ch_toScan.begin()); i != m_ch_toScan.end();)
-	{
-		if (sameChannel(*i, m_ch_current))
-		{
-			SCAN_eDebug("[scan.cpp-#1061] remove dupe 2");
-			m_ch_toScan.erase(i++);
-			continue;
-		}
-		++i;
-	}
-
-	nextChannel();
+	SCAN_eDebug("[scan.cpp] Transponder Search Complete!");
+	processCurrentChannel();
 }
+
+void eDVBScan::channelDone()
+{
+	// Process SDT section if available
+	processSDTSection();
+	
+	// Process VCT section if available
+	processVCTSection();
+	
+	// Process NIT section if available
+	processNITSection();
+	
+	// Check if PMT is running or if all tables are not yet ready
+	checkPMTAndTableCompletion();
+}
+
 
 void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transponders, int flags, int networkid)
 {
@@ -1146,7 +1298,8 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 		 * The bandwidth defines both the search step as well as the search bandwidth.
 		 */
 
-		SCAN_eDebug("[scan.cpp-#1114] blind scan requested");
+		SCAN_eDebug("[eDVBScan] blind scan requested");
+		transponderlist = &m_ch_blindscan;
 	}
 
 	if (m_flags & scanRemoveServices)
