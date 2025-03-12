@@ -514,37 +514,37 @@ RESULT eDVBFrontendParameters::getHash(unsigned long &hash) const
 
 RESULT eDVBFrontendParameters::calcLockTimeout(unsigned int &timeout) const
 {
-	switch (m_type)
-	{
-		case iDVBFrontend::feSatellite:
-		{
-			// Determine timeout based on satellite symbol rate
-			if (sat.symbol_rate >= 20000000)
-			{
-				// High symbol rate, fast tuning
-				eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 6000", sat.symbol_rate);
-				timeout = 6000; // 6 seconds
-			}
-			else if (sat.symbol_rate >= 2000000)
-			{
-				// Moderate symbol rate
-				eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 10000", sat.symbol_rate);
-				timeout = 10000; // 10 seconds
-			}
-			else if (sat.symbol_rate >= 800000)
-			{
-				// Low symbol rate, slower tuning
-				eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 30000", sat.symbol_rate);
-				timeout = 30000; // 30 seconds
-			}
-			else
-			{
-				// Very low symbol rate, longest tuning
-				eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 60000", sat.symbol_rate);
-				timeout = 60000; // 60 seconds
-			}
-			return 0;
-		}
+    switch (m_type)
+    {
+        case iDVBFrontend::feSatellite:
+        {
+            // Determine timeout based on satellite symbol rate
+            if (sat.symbol_rate >= 20000000)
+            {
+                // High symbol rate, fast tuning
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 6000", sat.symbol_rate);
+                timeout = 6000; // 6 seconds
+            }
+            else if (sat.symbol_rate >= 2000000)
+            {
+                // Moderate symbol rate
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 10000", sat.symbol_rate);
+                timeout = 10000; // 10 seconds
+            }
+            else if (sat.symbol_rate >= 800000)
+            {
+                // Low symbol rate, slower tuning
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 30000", sat.symbol_rate);
+                timeout = 30000; // 30 seconds
+            }
+            else
+            {
+                // Very low symbol rate, longest tuning
+                eDebug("[eDVBFrontend] sat.symbol_rate = %d, timeout = 60000", sat.symbol_rate);
+                timeout = 60000; // 60 seconds
+            }
+            return 0;
+        }
 		case iDVBFrontend::feCable:
 		{
 			timeout = 5000;
@@ -1454,7 +1454,7 @@ int eDVBFrontend::readFrontendData(int type)
 			break;
 		case iFrontendInformation_ENUMS::signalQuality:
 		case iFrontendInformation_ENUMS::signalQualitydB: /* this moved into the driver on DVB API 5.10 */
-			if (m_state == stateLock || eConfigManager::getConfigBoolValue(show_signal_below_lock, true))
+			if (m_state == stateLock)
 			{
 				int signalquality = 0;
 				int signalqualitydb = 0;
@@ -1555,22 +1555,22 @@ int eDVBFrontend::readFrontendData(int type)
 								signalquality = calculateSignalPercentage(signalqualitydb);
 							}
 							return signalquality;
-							if (m_state != stateLock)  
-							{
-								uint16_t snr = 0;
-								int signalquality = 0;
-								int signalqualitydb = 0;
-								if (!m_simulate)
-									ioctl(m_fd, FE_READ_SNR, &snr);
-								if (snr > 0 && snr < 65535)
-								{
-									calculateSignalQuality(snr, signalquality, signalqualitydb);
-									if (type == iFrontendInformation_ENUMS::signalQuality)
-										return signalquality;
-									else
-										return signalqualitydb;
-								}
-							}
+			                if (m_state != stateLock)
+			                {
+				                uint16_t snr = 0;
+				                int signalquality = 0;
+				                int signalqualitydb = 0;
+				                if (!m_simulate)
+					                ioctl(m_fd, FE_READ_SNR, &snr);
+				                if (snr > 0 && snr < 65535)
+				                {
+					                calculateSignalQuality(snr, signalquality, signalqualitydb);
+					                if (type == iFrontendInformation_ENUMS::signalQuality)
+						                return signalquality;
+					                else
+						                return signalqualitydb;
+				                }
+			                }
 						}
 					}
 				}
@@ -1914,7 +1914,7 @@ int eDVBFrontend::tuneLoopInt()  // called by m_tuneTimer
 				sec_fe->sendDiseqc(m_sec_sequence.current()->diseqc);
 				eDebugNoSimulateNoNewLineStart("[eDVBFrontend%d] sendDiseqc: ", m_dvbid);
 				for (int i=0; i < m_sec_sequence.current()->diseqc.len; ++i)
-					eDebugNoNewLine("%02x", m_sec_sequence.current()->diseqc.data[i]);
+				    eDebugNoNewLine("%02x", m_sec_sequence.current()->diseqc.data[i]);
 
 			 	if (!memcmp(m_sec_sequence.current()->diseqc.data, "\xE0\x00\x00", 3))
 					eDebugNoNewLine("(DiSEqC reset)\n");
