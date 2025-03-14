@@ -348,11 +348,24 @@ RESULT eDVBScan::startFilter()
 		}
 		if (tsid == -1)
 		{
+			SCAN_eDebug("[scan.cpp] tsid == -1; using default SDT specification.");
 			if (m_SDT->start(m_demux, eDVBSDTSpec()))
 				return -1;
 		}
-		else if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
-			return -1;
+		else 
+		{
+			SCAN_eDebug("[scan.cpp] tsid != -1; attempting to start SDT with eDVBSDTSpec(tsid, true).");
+			if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, true)))
+			{
+				SCAN_eDebug("[scan.cpp] First attempt with true failed; trying eDVBSDTSpec(tsid, false) as fallback.");
+				if (m_SDT->start(m_demux, eDVBSDTSpec(tsid, false)))
+				{
+					SCAN_eDebug("[scan.cpp] Fallback attempt with false also failed; returning failure.");
+					return -1;
+				}
+			}
+		}
+		SCAN_eDebug("[scan.cpp] SDT configuration completed.");
 		CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
 	}
 
