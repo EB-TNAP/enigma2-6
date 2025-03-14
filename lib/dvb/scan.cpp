@@ -285,7 +285,7 @@ RESULT eDVBScan::startFilter()
 
 			/* only start required filters filter */
 
-	if (m_ready_all & readyPAT && !(m_flags & scanOnlyFree))
+	if (m_ready_all & readyPAT)
 		startSDT = m_ready & readyPAT;
 
 	// m_ch_current is not set, when eDVBScan is just used for a SDT update
@@ -328,9 +328,7 @@ RESULT eDVBScan::startFilter()
 				for (; program != pat.getPrograms()->end(); ++program)
 					m_pmts_to_read.insert(std::pair<unsigned short, service>((*program)->getProgramNumber(), service((*program)->getProgramMapPid())));
 			}
-			// Only start PMT if not scanning for free channels only
-			if (!(m_flags & scanOnlyFree) || m_pmts_to_read.size() < 10) {
-				m_PMT = new eTable<ProgramMapSection>;
+			m_PMT = new eTable<ProgramMapSection>;
 			CONNECT(m_PMT->tableReady, eDVBScan::PMTready);
 			PMTready(-2);
 			// KabelBW HACK ... on 618Mhz and 626Mhz the transport stream id in PAT and SDT is different
@@ -346,7 +344,6 @@ RESULT eDVBScan::startFilter()
 						(tsid == 0x00d8 && absdiff(parm.frequency, 626000) < 2000))
 						tsid = -1;
 				}
-			}
 			}
 		}
 		if (tsid == -1)
@@ -903,7 +900,7 @@ void eDVBScan::channelDone()
 		m_ready &= ~validNIT;
 	}
 
-	if ((m_pmt_running && !(m_flags & scanOnlyFree)) || (m_ready & m_ready_all) != m_ready_all)
+	if (m_pmt_running || (m_ready & m_ready_all) != m_ready_all)
 	{
 		if (m_abort_current_pmt)
 		{
@@ -1111,11 +1108,6 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 	m_new_services.clear();
 	m_new_servicerefs.clear();
 	m_last_service = m_new_services.end();
-	// Modify the ready flags based on scanOnlyFree option
-	if (flags & scanOnlyFree)
-	{
-		m_ready_all &= ~readyPAT; // Don't wait for PAT if we only want free channels
-	}
 
 	if (m_flags & scanBlindSearch)
 	{
