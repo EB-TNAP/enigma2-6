@@ -49,13 +49,10 @@ eDVBScan::eDVBScan(iDVBChannel *channel, bool usePAT, bool debug)
 	if (m_channel->getDemux(m_demux))
 		SCAN_eDebug("[scan.cpp-#47] failed to allocate demux!");
 	m_channel->connectStateChange(sigc::mem_fun(*this, &eDVBScan::stateChange), m_stateChanged_connection);
-	m_lcn_file = NULL;
 }
 
 eDVBScan::~eDVBScan()
 {
-	if (m_lcn_file)
-		fclose(m_lcn_file);
 }
 
 int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTransportStreamID tsid)
