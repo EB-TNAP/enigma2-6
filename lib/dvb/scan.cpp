@@ -1352,15 +1352,6 @@ void eDVBScan::insertInto(iDVBChannelList *db, bool backgroundscanresult)
 				dvb_service->m_service_name_sort = service->second->m_service_name_sort;
 			}
 			dvb_service->m_provider_name = service->second->m_provider_name;
-			if (!service->second->m_default_authority.empty())
-			{
-				SCAN_eDebug("[eDVBScan] set da %08x:%04x:%04x:%04x <%s> %s", service->first.getDVBNamespace().get(), service->first.getOriginalNetworkID().get(), service->first.getTransportStreamID().get(), service->first.getServiceID().get(), service->second->m_default_authority.c_str(), dvb_service->m_service_name.c_str());
-				dvb_service->m_default_authority = service->second->m_default_authority;
-			}
-			if (service->second->m_aus_da_flag) {
-				SCAN_eDebug("[eDVBScan] set da.au %08x:%04x:%04x:%04x %08x %s", service->first.getDVBNamespace().get(), service->first.getOriginalNetworkID().get(), service->first.getTransportStreamID().get(), service->first.getServiceID().get(), service->second->m_aus_da_flag, dvb_service->m_service_name.c_str());
-				dvb_service->m_aus_da_flag = service->second->m_aus_da_flag;
-			}
 			if (service->second->m_ca.size())
 				dvb_service->m_ca = service->second->m_ca;
 			if (!backgroundscanresult) // do not remove new found flags when this is the result of a 'background scan'
