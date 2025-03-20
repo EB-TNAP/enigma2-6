@@ -254,31 +254,7 @@ RESULT eDVBScan::nextChannel()
 		{
 			SCAN_eDebug("[scan.cpp-#252] No Transponders left: %zd Transponders Scanned, %zd Transponders Unavailable, %zd Transponders in /etc/lamedb.",
 				m_ch_scanned.size(), m_ch_unavailable.size(), m_new_channels.size());
-			for (std::map<eServiceReferenceDVB, ePtr<eDVBService> >::const_iterator
-				service(m_new_services.begin()); service != m_new_services.end(); ++service)
-			{
-				eDVBChannelID chid(service->first.getDVBNamespace(), service->first.getTransportStreamID(), service->first.getOriginalNetworkID());
-				std::map<eDVBChannelID, uint32_t>::iterator it = m_aus_da_flags.find(chid);
-				if (it != m_aus_da_flags.end())
-				{
-					SCAN_eDebug("[eDVBScan] use NIT da.au %08x:%04x:%04x 0x%08x %s", chid.dvbnamespace.get(), chid.original_network_id.get(), chid.transport_stream_id.get(), it->second, service->second->m_service_name.c_str());
-					service->second->m_aus_da_flag = it->second;
-				}
-				if (service->second->m_default_authority.empty())
-				{
-					for (int i = 0; i < 2; i++)
-					{
-						std::map<eDVBChannelID, std::string>::iterator it = m_default_authorities.find(chid);
-						if (it != m_default_authorities.end())
-						{
-							SCAN_eDebug("[eDVBScan] use NIT da %08x:%04x:%04x <%s> %s", chid.dvbnamespace.get(), chid.original_network_id.get(), chid.transport_stream_id.get(), it->second.c_str(), service->second->m_service_name.c_str());
-							service->second->m_default_authority = it->second;
-							break;
-						}
-						chid.transport_stream_id = 0;
-					}
-				}
-			}
+
 			m_event(evtFinish);
 			return -ENOENT;
 		}
