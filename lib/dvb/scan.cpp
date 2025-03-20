@@ -766,29 +766,6 @@ void eDVBScan::channelDone()
 			{
 				SCAN_eDebug("[eDVBScan] m_networkid %d getTableIdExtension %d", m_networkid, (*i)->getTableIdExtension());
 			}
-
-			uint32_t aus_da_flag = 0;
-			std::string nit_default_authority;
-			const DescriptorList& descriptors = *(*i)->getDescriptors();
-			for (DescriptorConstIterator desc = descriptors.begin();
-					desc != descriptors.end(); ++desc)
-			{
-				switch ((*desc)->getTag())
-				{
-					case PRIVATE_DATA_SPECIFIER_DESCRIPTOR:
-					{
-						PrivateDataSpecifierDescriptor &d = (PrivateDataSpecifierDescriptor&)**desc;
-						eDebug("[eDVBScan]   NIT private %08x", d.getPrivateDataSpecifier());
-						uint32_t priv = d.getPrivateDataSpecifier();
-						// ZZ if (priv >= 0x3200 && priv <= 0x320f)
-						if (priv)
-						{
-							aus_da_flag = priv;
-						}
-						break;
-					}
-				}
-			}
 			const TransportStreamInfoList &tsinfovec = *(*i)->getTsInfo();
 
 			for (TransportStreamInfoConstIterator tsinfo(tsinfovec.begin());
