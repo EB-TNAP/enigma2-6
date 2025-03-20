@@ -1502,15 +1502,6 @@ RESULT eDVBScan::processSDT(eDVBNamespace dvbnamespace, const ServiceDescription
 					SCAN_eDebugNoNewLine("\n");
 					break;
 				}
-				case DEFAULT_AUTHORITY_DESCRIPTOR:
-				{
-					DefaultAuthorityDescriptor &d = (DefaultAuthorityDescriptor&)**desc;
-					const DefaultAuthorityByteVector *da = d.getAuthorityBytes();
-					service->m_default_authority = std::string((char*)da->data(), da->size());
-					std::transform(service->m_default_authority.begin(), service->m_default_authority.end(), service->m_default_authority.begin(), ::tolower);
-					SCAN_eDebug("[eDVBScan]   SDT da <%s>", service->m_default_authority.c_str());
-					break;
-				}
 				default:
 //					SCAN_eDebug("[scan.cpp-#1439]   descr<%x>", (*desc)->getTag());
 					break;
