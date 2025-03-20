@@ -12,7 +12,6 @@
 #include <dvbsi++/registration_descriptor.h>
 #include <dvbsi++/extension_descriptor.h>
 #include <dvbsi++/frequency_list_descriptor.h>
-#include <dvbsi++/default_authority_descriptor.h>
 #include <dvbsi++/private_data_specifier_descriptor.h>
 #include <lib/base/nconfig.h> // access to python config
 #include <lib/dvb/specs.h>
@@ -848,15 +847,6 @@ void eDVBScan::channelDone()
 						{
 							aus_da_flag = priv;
 						}
-						break;
-					}
-					case DEFAULT_AUTHORITY_DESCRIPTOR:
-					{
-						DefaultAuthorityDescriptor &d = (DefaultAuthorityDescriptor&)**desc;
-						const DefaultAuthorityByteVector *da = d.getAuthorityBytes();
-						nit_default_authority = std::string((char*)da->data(), da->size());
-						std::transform(nit_default_authority.begin(), nit_default_authority.end(), nit_default_authority.begin(), ::tolower);
-						SCAN_eDebug("[eDVBScan] NIT da <%s>", nit_default_authority.c_str());
 						break;
 					}
 				}

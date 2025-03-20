@@ -339,8 +339,6 @@ public:
 	bool useEIT() const { return !(m_flags & dxNoEIT); }
 
 	CAID_LIST m_ca;
-	std::string m_default_authority;
-	uint32_t m_aus_da_flag = 0;
 
 	virtual ~eDVBService();
 
