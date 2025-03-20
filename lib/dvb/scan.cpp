@@ -1159,26 +1159,6 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 	m_new_services.clear();
 	m_last_service = m_new_services.end();
 
-	if (m_lcn_file)
-		fclose(m_lcn_file);
-		
-	if (m_flags & scanRemoveServices)
-	{
-		m_lcn_file = fopen(eEnv::resolve("${sysconfdir}/enigma2/lcndb").c_str(), "w");
-		if (!m_lcn_file)
-			eDebug("[eDVBScan] couldn't open file lcndb");
-	}
-	else
-	{
-		m_lcn_file = fopen(eEnv::resolve("${sysconfdir}/enigma2/lcndb").c_str(), "r+");
-		if (!m_lcn_file)
-		{
-			m_lcn_file = fopen(eEnv::resolve("${sysconfdir}/enigma2/lcndb").c_str(), "w");
-			if (!m_lcn_file)
-				eDebug("[eDVBScan] couldn't open file lcndb");
-		}
-	}
-
 	if (m_flags & scanBlindSearch)
 	{
 		/*
