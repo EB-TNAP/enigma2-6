@@ -56,7 +56,6 @@ class eDVBScan: public sigc::trackable, public iObject
 	std::map<eDVBChannelID, int> m_tuner_data; // frequency read from tuner for every new channel
 
 	std::map<eServiceReferenceDVB, ePtr<eDVBService> > m_new_services;
-	std::vector<eServiceReferenceDVB> m_new_servicerefs;
 	std::map<eServiceReferenceDVB, ePtr<eDVBService> >::iterator m_last_service;
 
 	std::map<unsigned short, service> m_pmts_to_read;
@@ -98,6 +97,11 @@ class eDVBScan: public sigc::trackable, public iObject
 	int m_networkid;
 	bool m_usePAT;
 	bool m_scan_debug;
+	
+	FILE *m_lcn_file;
+	std::map<eDVBChannelID, uint32_t> m_aus_da_flags;
+	std::map<eDVBChannelID, std::string> m_default_authorities;
+	void addLcnToDB(eDVBNamespace ns, eOriginalNetworkID onid, eTransportStreamID tsid, eServiceID sid, uint16_t lcn, uint32_t signal);
 public:
 	eDVBScan(iDVBChannel *channel, bool usePAT=true, bool debug=true );
 	~eDVBScan();
