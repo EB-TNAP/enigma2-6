@@ -46,7 +46,7 @@ class eDVBScan: public sigc::trackable, public iObject
 
 	RESULT startFilter();
 	enum { readyPAT=1, readySDT=2, readyNIT=4, readyBAT=8,
-	       validPAT=16, validSDT=32, validNIT=64, validBAT=128, validVCT=256};
+	       validPAT=16, validSDT=32, validNIT=64, validBAT=128, validVCT=256, readySDT_retry=512};
 
 		/* scan state variables */
 	int m_channel_state;

@@ -408,7 +408,29 @@ RESULT eDVBScan::startFilter()
 
 void eDVBScan::SDTready(int err)
 {
-	SCAN_eDebug("[scan.cpp-#388] got sdt %d", err);
+	if (err)
+	{
+		// Only retry once with different SDT parameters
+		if (!(m_ready & readySDT_retry))
+		{
+			m_ready |= readySDT_retry;
+			SCAN_eDebug("[scan.cpp] SDT acquisition failed, retrying with alternate parameters");
+			m_SDT = new eTable<ServiceDescriptionSection>;
+			
+			// Try with a different approach - no specific transport stream ID filter
+			if (m_SDT->start(m_demux, eDVBSDTSpec()))
+			{
+				SCAN_eDebug("[scan.cpp] SDT retry also failed");
+				m_ready |= readySDT;
+				channelDone();
+				return;
+			}
+			CONNECT(m_SDT->tableReady, eDVBScan::SDTready);
+			return;
+		}
+	}
+	
+	SCAN_eDebug("[scan.cpp] Got SDT %d", err);
 	m_ready |= readySDT;
 	if (!err)
 		m_ready |= validSDT;
