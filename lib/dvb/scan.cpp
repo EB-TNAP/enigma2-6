@@ -7,6 +7,7 @@
 #include <dvbsi++/terrestrial_delivery_system_descriptor.h>
 #include <dvbsi++/t2_delivery_system_descriptor.h>
 #include <dvbsi++/cable_delivery_system_descriptor.h>
+#include <dvbsi++/logical_channel_descriptor.h>
 #include <dvbsi++/ca_identifier_descriptor.h>
 #include <dvbsi++/registration_descriptor.h>
 #include <dvbsi++/extension_descriptor.h>
@@ -23,6 +24,7 @@
 #include <lib/base/estring.h>
 #include <lib/dvb/dvb.h>
 #include <lib/dvb/db.h>
+#include <lib/python/python.h>
 #include <errno.h>
 #include "absdiff.h"
 
@@ -90,47 +92,6 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 
 	if (state == iDVBChannel::state_ok)
 	{
-		// Add signal quality measurement and reporting
-		ePtr<iDVBFrontend> fe;
-		if (!m_channel->getFrontend(fe))
-		{
-			int strength = 0, quality = 0, ber = 0, snr = 0;
-			fe->getSignalStrength(strength);
-			fe->getSignalQuality(quality);
-			fe->getBitErrorRate(ber);
-			fe->getSignalToNoise(snr);
-			
-			// Create a structure to pass signal data with the event
-			struct SignalInfoEvent
-			{
-				int strength_percent;
-				int quality_percent;
-				int ber;
-				int snr_db;
-				bool is_locked;
-			} signalData;
-			
-			signalData.strength_percent = strength * 100 / 65535;
-			signalData.quality_percent = quality * 100 / 65535;
-			signalData.ber = ber;
-			signalData.snr_db = snr / 100;
-			signalData.is_locked = true; // We're in state_ok, so locked is true
-			
-			// Define a new event type
-			enum { evtSignalLock = 6 }; // Use a number that doesn't conflict with existing event types
-			
-			// Emit the signal lock event with the data
-			m_event(evtSignalLock, &signalData);
-			
-			// Debug output of signal data
-			SCAN_eDebug("[scan.cpp] Signal locked - Strength: %d%%, Quality: %d%%, BER: %d, SNR: %d dB",
-					  signalData.strength_percent, 
-					  signalData.quality_percent,
-					  signalData.ber,
-					  signalData.snr_db);
-		}
-
-		// Original code continues
 		if (m_ch_current && m_channel)
 		{
 			int type;
@@ -217,38 +178,6 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 		m_channel_state = state;
 	} else if (state == iDVBChannel::state_failed)
 	{
-		// Report signal quality for failed channels too
-		ePtr<iDVBFrontend> fe;
-		if (!m_channel->getFrontend(fe))
-		{
-			// Create a structure to pass signal data with the event
-			struct SignalInfoEvent
-			{
-				int strength_percent;
-				int quality_percent;
-				int ber;
-				int snr_db;
-				bool is_locked;
-			} signalData;
-			
-			// For failed tuning, set all signal metrics to 0
-			signalData.strength_percent = 0;
-			signalData.quality_percent = 0;
-			signalData.ber = 0;
-			signalData.snr_db = 0;
-			signalData.is_locked = false;
-			
-			// Define a new event type
-			enum { evtSignalFailed = 7 }; // Use a number that doesn't conflict with existing event types
-			
-			// Emit the signal failure event with the data
-			m_event(evtSignalFailed, &signalData);
-			
-			// Debug output of signal failure
-			SCAN_eDebug("[scan.cpp] Signal failed to lock on current transponder");
-		}
-
-		// Original code continues
 		if (m_ch_current && m_channel)
 		{
 			int type;
@@ -448,8 +377,11 @@ RESULT eDVBScan::startFilter()
 		if (m_ready_all & readyPAT)
 		{
 			m_PAT = new eTable<ProgramAssociationSection>;
-			if (m_PAT->start(m_demux, eDVBPATSpec(4000)))
+			if (m_PAT->start(m_demux, eDVBPATSpec(8000)))
+			{
+				SCAN_eDebug("[scan.cpp #380] ERROR: Timed out waiting on PAT after 8 seconds for transponder %d MHz", frequency/1000);
 				return -1;
+			}
 			CONNECT(m_PAT->tableReady, eDVBScan::PATready);
 		}
 
@@ -472,50 +404,6 @@ RESULT eDVBScan::startFilter()
 		}
 	}
 	return 0;
-}
-
-// Add this method to update signal information periodically
-void eDVBScan::updateSignalInfo()
-{
-	if (m_channel_state == iDVBChannel::state_ok)
-	{
-		ePtr<iDVBFrontend> fe;
-		if (!m_channel->getFrontend(fe))
-		{
-			int strength = 0, quality = 0, ber = 0, snr = 0;
-			fe->getSignalStrength(strength);
-			fe->getSignalQuality(quality);
-			fe->getBitErrorRate(ber);
-			fe->getSignalToNoise(snr);
-			
-			// Create a structure to pass signal data with the event
-			struct SignalInfoEvent
-			{
-				int strength_percent;
-				int quality_percent;
-				int ber;
-				int snr_db;
-			} signalData;
-			
-			signalData.strength_percent = strength * 100 / 65535;
-			signalData.quality_percent = quality * 100 / 65535;
-			signalData.ber = ber;
-			signalData.snr_db = snr / 100;
-			
-			// Define a new event type
-			enum { evtSignalUpdate = 5 }; // Use a number that doesn't conflict with existing event types
-			
-			// Emit the signal update event with the data
-			m_event(evtSignalUpdate, &signalData);
-			
-			// Debug output of signal data
-			SCAN_eDebug("[scan.cpp] Signal update - Strength: %d%%, Quality: %d%%, BER: %d, SNR: %d dB",
-					  signalData.strength_percent, 
-					  signalData.quality_percent,
-					  signalData.ber,
-					  signalData.snr_db);
-		}
-	}
 }
 
 void eDVBScan::SDTready(int err)
@@ -817,53 +705,6 @@ int eDVBScan::sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *c
 
 void eDVBScan::channelDone()
 {
-	// Get and report signal quality information first
-	ePtr<iDVBFrontend> fe;
-	if (!m_channel->getFrontend(fe))
-	{
-		int strength = 0, quality = 0, ber = 0, snr = 0;
-		fe->getSignalStrength(strength);
-		fe->getSignalQuality(quality);
-		fe->getBitErrorRate(ber);
-		fe->getSignalToNoise(snr);
-		
-		SCAN_eDebug("[scan.cpp] Signal info - Strength: %d%%, Quality: %d%%, BER: %d, SNR: %d dB",
-				   strength * 100 / 65535, 
-				   quality * 100 / 65535,
-				   ber,
-				   snr / 100);
-				   
-		// Emit signal information event with custom data structure
-		struct SignalInfoEvent
-		{
-			int strength_percent;
-			int quality_percent;
-			int ber;
-			int snr_db;
-			bool is_locked;
-		} signalData;
-		
-		int state;
-		fe->getState(state);
-		
-		signalData.strength_percent = strength * 100 / 65535;
-		signalData.quality_percent = quality * 100 / 65535;
-		signalData.ber = ber;
-		signalData.snr_db = snr / 100;
-		signalData.is_locked = (state == iDVBFrontend::stateLocked);
-		
-		// Emit custom event with signal data
-		struct SignalUpdateEvent
-		{
-			enum { evtSignalInfo = 10 }; // High number to avoid conflicts with existing event types
-			SignalInfoEvent info;
-		} event;
-		
-		event.info = signalData;
-		m_event(SignalUpdateEvent::evtSignalInfo, &event);
-	}
-
-	// Original channelDone functionality follows
 	if (m_ready & validSDT && (!(m_flags & scanOnlyFree) || !m_pmt_running))
 	{
 		unsigned long hash = 0;
@@ -930,6 +771,9 @@ void eDVBScan::channelDone()
 					(*tsinfo)->getOriginalNetworkId());
 				bool T2 = false;
 				eDVBFrontendParametersTerrestrial t2transponder;
+				eOriginalNetworkID onid = (*tsinfo)->getOriginalNetworkId();
+				eTransportStreamID tsid = (*tsinfo)->getTransportStreamId();
+				eDVBNamespace ns(0);
 
 				for (DescriptorConstIterator desc = (*tsinfo)->getDescriptors()->begin();
 						desc != (*tsinfo)->getDescriptors()->end(); ++desc)
@@ -946,6 +790,10 @@ void eDVBScan::channelDone()
 						cable.set(d);
 						feparm->setDVBC(cable);
 
+						unsigned long hash=0;
+						feparm->getHash(hash);
+						ns = buildNamespace(onid, tsid, hash);
+
 						addChannelToScan(feparm);
 						break;
 					}
@@ -958,8 +806,17 @@ void eDVBScan::channelDone()
 						eDVBFrontendParametersTerrestrial terr;
 						terr.set(d);
 						feparm->setDVBT(terr);
+						
+						unsigned long hash=0;
+						feparm->getHash(hash);
+						ns = buildNamespace(onid, tsid, hash);
 
 						addChannelToScan(feparm);
+						break;
+					}
+					case LOGICAL_CHANNEL_DESCRIPTOR:
+					{
+						// we handle it later
 						break;
 					}
 					case S2_SATELLITE_DELIVERY_SYSTEM_DESCRIPTOR:
@@ -1014,6 +871,18 @@ void eDVBScan::channelDone()
 							T2DeliverySystemDescriptor &d = (T2DeliverySystemDescriptor&)**desc;
 							t2transponder.set(d);
 
+							// fetch T2 namespace for LCN output, where frequency data may not be in SI table
+							ePtr<iDVBFrontend> fe;
+							ePtr<iDVBTransponderData> trdata;
+							if (!m_channel->getFrontend(fe))
+							{
+								fe->getTransponderData(trdata, true);
+								int freq = trdata->getFrequency();
+								long hash = 0xEEEE0000;
+								hash |= (freq/1000000)&0xFFFF;
+								ns = buildNamespace(onid, tsid, hash);  // used in case LOGICAL_CHANNEL_DESCRIPTOR
+							}  // end fetch T2 namespace
+
 							for (T2CellConstIterator cell = d.getCells()->begin();
 								cell != d.getCells()->end(); ++cell)
 							{
@@ -1053,6 +922,42 @@ void eDVBScan::channelDone()
 					default:
 						SCAN_eDebug("[scan.cpp-#850] descr<%x>", (*desc)->getTag());
 						break;
+					}
+				}
+				// we do this after the main loop because we absolutely need the namespace
+				for (DescriptorConstIterator desc = (*tsinfo)->getDescriptors()->begin();
+					desc != (*tsinfo)->getDescriptors()->end(); ++desc)
+				{
+					switch ((*desc)->getTag())
+					{
+						case LOGICAL_CHANNEL_DESCRIPTOR:
+						{
+							if (!(system == iDVBFrontend::feTerrestrial || system == iDVBFrontend::feCable))
+								break; // when current locked transponder is not terrestrial or cable ignore this descriptor
+
+							if (ns.get() == 0)
+								break; // invalid namespace
+
+							int signal = 0;
+							ePtr<iDVBFrontend> fe;
+
+							if (!m_channel->getFrontend(fe))
+								signal = fe->readFrontendData(iFrontendInformation_ENUMS::signalQuality);
+
+							LogicalChannelDescriptor &d = (LogicalChannelDescriptor&)**desc;
+							for (LogicalChannelListConstIterator it = d.getChannelList()->begin(); it != d.getChannelList()->end(); it++)
+							{
+								LogicalChannel *ch = *it;
+								if (ch->getVisibleServiceFlag())
+								{
+									eDVBDB::getInstance()->addLcnToDB(ns.get(), onid.get(), tsid.get(), eServiceID(ch->getServiceId()).get(), ch->getLogicalChannelNumber(), signal);
+									SCAN_eDebug("NAMESPACE: %08x ONID: %04x TSID: %04x SID: %04x LCN: %05d SIGNAL: %08d", ns.get(), onid.get(), tsid.get(), ch->getServiceId(), ch->getLogicalChannelNumber(), signal);
+								}
+							}
+							break;
+						}
+						default:
+							break;
 					}
 				}
 			}
@@ -1318,6 +1223,12 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 		SCAN_eDebug("[eDVBScan] blind scan requested");
 		transponderlist = &m_ch_blindscan;
 	}
+
+	if (m_flags & scanRemoveServices)
+	{
+		eDVBDB::getInstance()->resetLcnDB();
+	}
+
 
 	for (eSmartPtrList<iDVBFrontendParameters>::const_iterator i(known_transponders.begin()); i != known_transponders.end(); ++i)
 	{
@@ -1617,6 +1528,29 @@ RESULT eDVBScan::processSDT(eDVBNamespace dvbnamespace, const ServiceDescription
 				{
 					ServiceDescriptor &d = (ServiceDescriptor&)**desc;
 					int servicetype = d.getServiceType();
+
+					/* NA scanning hack */
+					switch (servicetype)
+					{
+					/* DISH/BEV servicetypes: */
+					case 128:
+					case 131: /*Sky UK OpenTV EPG channel */
+					case 133:
+					case 137:
+					case 144:
+					case 145:
+					case 150:
+					case 154:
+					case 163:
+					case 164:
+					case 166:
+					case 167:
+					case 168:
+						servicetype = 1;
+						break;
+					}
+					/* */
+
 					ref.setServiceType(servicetype);
 					int tsonid=(sdt.getTransportStreamId() << 16) | sdt.getOriginalNetworkId();
 					service->m_service_name = strip_non_graph(convertDVBUTF8(d.getServiceName(),-1,tsonid,0));
