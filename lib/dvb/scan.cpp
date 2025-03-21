@@ -90,6 +90,47 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 
 	if (state == iDVBChannel::state_ok)
 	{
+		// Add signal quality measurement and reporting
+		ePtr<iDVBFrontend> fe;
+		if (!m_channel->getFrontend(fe))
+		{
+			int strength = 0, quality = 0, ber = 0, snr = 0;
+			fe->getSignalStrength(strength);
+			fe->getSignalQuality(quality);
+			fe->getBitErrorRate(ber);
+			fe->getSignalToNoise(snr);
+			
+			// Create a structure to pass signal data with the event
+			struct SignalInfoEvent
+			{
+				int strength_percent;
+				int quality_percent;
+				int ber;
+				int snr_db;
+				bool is_locked;
+			} signalData;
+			
+			signalData.strength_percent = strength * 100 / 65535;
+			signalData.quality_percent = quality * 100 / 65535;
+			signalData.ber = ber;
+			signalData.snr_db = snr / 100;
+			signalData.is_locked = true; // We're in state_ok, so locked is true
+			
+			// Define a new event type
+			enum { evtSignalLock = 6 }; // Use a number that doesn't conflict with existing event types
+			
+			// Emit the signal lock event with the data
+			m_event(evtSignalLock, &signalData);
+			
+			// Debug output of signal data
+			SCAN_eDebug("[scan.cpp] Signal locked - Strength: %d%%, Quality: %d%%, BER: %d, SNR: %d dB",
+					  signalData.strength_percent, 
+					  signalData.quality_percent,
+					  signalData.ber,
+					  signalData.snr_db);
+		}
+
+		// Original code continues
 		if (m_ch_current && m_channel)
 		{
 			int type;
@@ -176,6 +217,38 @@ void eDVBScan::stateChange(iDVBChannel *ch)
 		m_channel_state = state;
 	} else if (state == iDVBChannel::state_failed)
 	{
+		// Report signal quality for failed channels too
+		ePtr<iDVBFrontend> fe;
+		if (!m_channel->getFrontend(fe))
+		{
+			// Create a structure to pass signal data with the event
+			struct SignalInfoEvent
+			{
+				int strength_percent;
+				int quality_percent;
+				int ber;
+				int snr_db;
+				bool is_locked;
+			} signalData;
+			
+			// For failed tuning, set all signal metrics to 0
+			signalData.strength_percent = 0;
+			signalData.quality_percent = 0;
+			signalData.ber = 0;
+			signalData.snr_db = 0;
+			signalData.is_locked = false;
+			
+			// Define a new event type
+			enum { evtSignalFailed = 7 }; // Use a number that doesn't conflict with existing event types
+			
+			// Emit the signal failure event with the data
+			m_event(evtSignalFailed, &signalData);
+			
+			// Debug output of signal failure
+			SCAN_eDebug("[scan.cpp] Signal failed to lock on current transponder");
+		}
+
+		// Original code continues
 		if (m_ch_current && m_channel)
 		{
 			int type;
@@ -399,6 +472,50 @@ RESULT eDVBScan::startFilter()
 		}
 	}
 	return 0;
+}
+
+// Add this method to update signal information periodically
+void eDVBScan::updateSignalInfo()
+{
+	if (m_channel_state == iDVBChannel::state_ok)
+	{
+		ePtr<iDVBFrontend> fe;
+		if (!m_channel->getFrontend(fe))
+		{
+			int strength = 0, quality = 0, ber = 0, snr = 0;
+			fe->getSignalStrength(strength);
+			fe->getSignalQuality(quality);
+			fe->getBitErrorRate(ber);
+			fe->getSignalToNoise(snr);
+			
+			// Create a structure to pass signal data with the event
+			struct SignalInfoEvent
+			{
+				int strength_percent;
+				int quality_percent;
+				int ber;
+				int snr_db;
+			} signalData;
+			
+			signalData.strength_percent = strength * 100 / 65535;
+			signalData.quality_percent = quality * 100 / 65535;
+			signalData.ber = ber;
+			signalData.snr_db = snr / 100;
+			
+			// Define a new event type
+			enum { evtSignalUpdate = 5 }; // Use a number that doesn't conflict with existing event types
+			
+			// Emit the signal update event with the data
+			m_event(evtSignalUpdate, &signalData);
+			
+			// Debug output of signal data
+			SCAN_eDebug("[scan.cpp] Signal update - Strength: %d%%, Quality: %d%%, BER: %d, SNR: %d dB",
+					  signalData.strength_percent, 
+					  signalData.quality_percent,
+					  signalData.ber,
+					  signalData.snr_db);
+		}
+	}
 }
 
 void eDVBScan::SDTready(int err)
@@ -700,6 +817,53 @@ int eDVBScan::sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *c
 
 void eDVBScan::channelDone()
 {
+	// Get and report signal quality information first
+	ePtr<iDVBFrontend> fe;
+	if (!m_channel->getFrontend(fe))
+	{
+		int strength = 0, quality = 0, ber = 0, snr = 0;
+		fe->getSignalStrength(strength);
+		fe->getSignalQuality(quality);
+		fe->getBitErrorRate(ber);
+		fe->getSignalToNoise(snr);
+		
+		SCAN_eDebug("[scan.cpp] Signal info - Strength: %d%%, Quality: %d%%, BER: %d, SNR: %d dB",
+				   strength * 100 / 65535, 
+				   quality * 100 / 65535,
+				   ber,
+				   snr / 100);
+				   
+		// Emit signal information event with custom data structure
+		struct SignalInfoEvent
+		{
+			int strength_percent;
+			int quality_percent;
+			int ber;
+			int snr_db;
+			bool is_locked;
+		} signalData;
+		
+		int state;
+		fe->getState(state);
+		
+		signalData.strength_percent = strength * 100 / 65535;
+		signalData.quality_percent = quality * 100 / 65535;
+		signalData.ber = ber;
+		signalData.snr_db = snr / 100;
+		signalData.is_locked = (state == iDVBFrontend::stateLocked);
+		
+		// Emit custom event with signal data
+		struct SignalUpdateEvent
+		{
+			enum { evtSignalInfo = 10 }; // High number to avoid conflicts with existing event types
+			SignalInfoEvent info;
+		} event;
+		
+		event.info = signalData;
+		m_event(SignalUpdateEvent::evtSignalInfo, &event);
+	}
+
+	// Original channelDone functionality follows
 	if (m_ready & validSDT && (!(m_flags & scanOnlyFree) || !m_pmt_running))
 	{
 		unsigned long hash = 0;

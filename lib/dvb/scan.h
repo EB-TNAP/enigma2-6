@@ -23,6 +23,16 @@ struct service
 	bool scrambled;
 };
 
+// Structure for signal quality information
+struct SignalInfoEvent
+{
+	int strength_percent;
+	int quality_percent;
+	int ber;
+	int snr_db;
+	bool is_locked;
+};
+
 class eDVBScan: public sigc::trackable, public iObject
 {
 	DECLARE_REF(eDVBScan);
@@ -75,6 +85,10 @@ class eDVBScan: public sigc::trackable, public iObject
 	ePtr<eTable<ProgramAssociationSection> > m_PAT;
 	ePtr<eTable<ProgramMapSection> > m_PMT;
 	ePtr<eTable<VirtualChannelTableSection> > m_VCT;
+	
+	// Signal quality monitoring timer
+	ePtr<eTimer> m_signal_update_timer;
+	void updateSignalInfo();
 
 	void SDTready(int err);
 	void NITready(int err);
@@ -111,7 +125,7 @@ public:
 
 	void start(const eSmartPtrList<iDVBFrontendParameters> &known_transponders, int flags, int networkid = 0);
 
-	enum { evtUpdate, evtNewService, evtFinish, evtFail };
+	enum { evtFinish = 0, evtFail = 1, evtUpdate = 2, evtNewService = 3, evtSignalInfo = 4 };
 	RESULT connectEvent(const sigc::slot<void(int)> &event, ePtr<eConnection> &connection);
 	void insertInto(iDVBChannelList *db, bool backgroundscanresult=false);
 
