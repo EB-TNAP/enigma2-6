@@ -379,7 +379,7 @@ RESULT eDVBScan::startFilter()
 			m_PAT = new eTable<ProgramAssociationSection>;
 			if (m_PAT->start(m_demux, eDVBPATSpec(8000)))
 			{
-				SCAN_eDebug("[scan.cpp #380] ERROR: Timed out waiting on PAT after 8 seconds for transponder %d MHz", frequency/1000);
+				SCAN_eDebug("[scan.cpp #380] ERROR: Timed out waiting on PAT after 8 seconds");
 				return -1;
 			}
 			CONNECT(m_PAT->tableReady, eDVBScan::PATready);
