@@ -267,15 +267,18 @@ int eDVBSatelliteEquipmentControl::canTune(const eDVBFrontendParametersSatellite
 					// Check if threshold is 0, use voltage to determine LOF
 					int lof = 0;
 
-					// Safely downcast to access voltage from the frontend
+					// Try to read frontend voltage (via VOLTAGE macro or direct call)
+					fe_sec_voltage_t voltage;
 					eDVBFrontend *dvbfe = dynamic_cast<eDVBFrontend*>(fe);
-					if (!dvbfe)
+					if (dvbfe)
 					{
-						eDebug("Bandstacked LNB: failed to access frontend voltage (cast failed)");
-						return -1; // or whatever fallback your function requires
+						voltage = dvbfe->getVoltage();
 					}
-
-					fe_sec_voltage_t voltage = dvbfe->getVoltage();
+					else
+					{
+						eDebug("Bandstacked LNB: failed to read voltage (frontend cast failed)");
+						voltage = iDVBFrontend::voltageOff;  // Safe default
+					}
 
 					if (lnb_param.m_lof_threshold == 0)
 					{
@@ -292,7 +295,6 @@ int eDVBSatelliteEquipmentControl::canTune(const eDVBFrontendParametersSatellite
 							? lnb_param.m_lof_hi
 							: lnb_param.m_lof_lo;
 					}
-
 					// END CUSTOM BANDSTACKED C-BAND LNB LOGIC
 
 					unsigned int tuner_freq = absdiff(sat.frequency, lof);
