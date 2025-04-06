@@ -263,8 +263,22 @@ int eDVBSatelliteEquipmentControl::canTune(const eDVBFrontendParametersSatellite
 
 				if (ret && !is_unicable)
 				{
-					int lof = (unsigned)sat.frequency > lnb_param.m_lof_threshold ?
-						lnb_param.m_lof_hi : lnb_param.m_lof_lo;
+					// BEGIN CUSTOM BANDSTACKED C-BAND LNB LOGIC
+					// Check if threshold is 0, use voltage to determine LOF
+					int lof;
+					if (lnb_param.m_lof_threshold == 0) {
+						// Use voltage to determine if we should use 5150 (13V) or 5750 (18V)
+						if (voltage == iDVBFrontend::voltage13)
+							lof = lnb_param.m_lof_lo;  // 5150 MHz
+						else
+							lof = lnb_param.m_lof_hi;  // 5750 MHz
+					} else {
+						// Default logic (threshold-based)
+						lof = (unsigned)sat.frequency > lnb_param.m_lof_threshold ?
+							lnb_param.m_lof_hi : lnb_param.m_lof_lo;
+					}
+					// END CUSTOM BANDSTACKED C-BAND LNB LOGIC
+
 					unsigned int tuner_freq = absdiff(sat.frequency, lof);
 					if (tuner_freq < (fe_info.type ? fe_info.frequency_min/1000 : fe_info.frequency_min)
 						|| tuner_freq > (fe_info.type ? fe_info.frequency_max/1000 : fe_info.frequency_max))
