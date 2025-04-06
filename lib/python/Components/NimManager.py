@@ -385,7 +385,12 @@ class SecConfigure:
 				elif currLnb.lof.value == "c_band_5750":
 					sec.setLNBLOFL(5750000)
 					sec.setLNBLOFH(5750000)
-					sec.setLNBThreshold(5750000)					
+					sec.setLNBThreshold(5750000)
+				elif currLnb.lof.value == "c_band_bandstack":
+					# Initialize to default values - these will be adjusted based on voltage
+					sec.setLNBLOFL(5150000)
+					sec.setLNBLOFH(5750000)
+					sec.setLNBThreshold(5450000)  # Set a high threshold initially                
 				elif currLnb.lof.value == "user_defined":
 					sec.setLNBLOFL(currLnb.lofl.value * 1000)
 					sec.setLNBLOFH(currLnb.lofh.value * 1000)
@@ -536,7 +541,6 @@ class SecConfigure:
 						sec.setRotorPosNum(currSat.rotorposition.value)
 					else:
 						sec.setRotorPosNum(0) #USALS
-
 
 class NIM:
 	def __init__(self, slot, type, description, has_outputs=True, internally_connectable=None, multi_type={}, frontend_id=None, i2c=None, is_empty=False, supports_blind_scan=False, is_fbc=[0, 0, 0], number_of_slots=0):
@@ -1344,6 +1348,7 @@ def InitNimManager(nimmgr, update_slots=[]):
 		"universal_lnb": _("KU UNV 9750/10600"),
 		"c_band": _("C-band 5150"),
 		"c_band_5750": _("C-band 5750"),
+		"c_band_bandstack": _("C-band bandstack 5150/5750"),
 		"ka_sat": _("KA-SAT"),
 		"ka_sat_20357": _("KA-SAT-20357MHz"),
 		"unicable": _("SCR (Unicable/JESS)"),
