@@ -265,18 +265,34 @@ int eDVBSatelliteEquipmentControl::canTune(const eDVBFrontendParametersSatellite
 				{
 					// BEGIN CUSTOM BANDSTACKED C-BAND LNB LOGIC
 					// Check if threshold is 0, use voltage to determine LOF
-					int lof;
-					if (lnb_param.m_lof_threshold == 0) {
-						// Use voltage to determine if we should use 5150 (13V) or 5750 (18V)
-						if (voltage == iDVBFrontend::voltage13)
+					int lof = 0;
+
+					// Safely downcast to access voltage from the frontend
+					eDVBFrontend *dvbfe = dynamic_cast<eDVBFrontend*>(fe);
+					if (!dvbfe)
+					{
+						eDebug("Bandstacked LNB: failed to access frontend voltage (cast failed)");
+						return -1; // or whatever fallback your function requires
+					}
+
+					fe_sec_voltage_t voltage = dvbfe->getVoltage();
+
+					if (lnb_param.m_lof_threshold == 0)
+					{
+						// Voltage-based LOF: 13V = 5150, 18V = 5750
+						if (voltage == iDVBFrontend::voltage13 || voltage == iDVBFrontend::voltage13_5)
 							lof = lnb_param.m_lof_lo;  // 5150 MHz
 						else
 							lof = lnb_param.m_lof_hi;  // 5750 MHz
-					} else {
-						// Default logic (threshold-based)
-						lof = (unsigned)sat.frequency > lnb_param.m_lof_threshold ?
-							lnb_param.m_lof_hi : lnb_param.m_lof_lo;
 					}
+					else
+					{
+						// Standard threshold-based LOF switching
+						lof = (unsigned)sat.frequency > lnb_param.m_lof_threshold
+							? lnb_param.m_lof_hi
+							: lnb_param.m_lof_lo;
+					}
+
 					// END CUSTOM BANDSTACKED C-BAND LNB LOGIC
 
 					unsigned int tuner_freq = absdiff(sat.frequency, lof);
