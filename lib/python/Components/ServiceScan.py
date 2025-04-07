@@ -10,8 +10,7 @@ from time import strftime, time, gmtime, localtime
 import os
 import pwd
 import grp
-import Dvbcsva                           
-import Dvbcsvb 
+import subprocess  # New import for running dvbstat binary
 import time as ttime
 
 
@@ -64,6 +63,21 @@ if fileExists("/proc/stb/info/boxtype") and not fileExists("/proc/stb/info/hwmod
 	except:
 		pass
 
+# New function to get signal data from dvbstat binary
+def get_signal_data(adapter=0):
+    try:
+        result = subprocess.run(['dvbstat', '--adapter', str(adapter)], 
+                               capture_output=True, text=True, check=True)
+        output = result.stdout.strip().split(';')
+        if len(output) == 3:
+            return {
+                'snr': float(output[0]),
+                'status': 0 if output[1] == "UnLocked" else 16,  # Match existing code status values
+                'strength': float(output[2])
+            }
+    except Exception as e:
+        print(f"Error getting signal data: {e}")
+    return {'snr': 0, 'status': 0, 'strength': 0}  # Default values on error
 
 
 class ServiceScan:
@@ -104,33 +118,11 @@ class ServiceScan:
 				#TRANSLATORS: Intermediate scanning result, '%d' channel(s) have been found so far
 				message += ngettext("  Channels Found = %d", "  Channels Found = %d", result) % result
 				if self.l == 1 and tpnumb > 1: 
-					for x in range(10):
-						if self.feid == 0:
-							if BOX_MODEL != "edision":
-							    self.signaltp = Dvbcsva.fe.getSignalNoiseRatio() / 100
-							    self.signaltp1 = Dvbcsva.fe.getStatus()
-							    self.signaltp2 = Dvbcsva.fe.getSignalStrength() / 1000 * 1.4
-							if BOX_MODEL == "edision":
-							    self.signaltp = Dvbcsva.fe.getSignalNoiseRatio() / 4456.21
-							    self.signaltp1 = Dvbcsva.fe.getStatus()
-							    self.signaltp2 = Dvbcsva.fe.getSignalStrength() / 819.1875
-							if BOX_MODEL == "edision" and self.size > 100000:
-							    self.signaltp = Dvbcsva.fe.getSignalNoiseRatio() / 1000
-							    self.signaltp1 = Dvbcsva.fe.getStatus()
-							    self.signaltp2 = Dvbcsva.fe.getSignalStrength()
-						if self.feid == 1:
-							if BOX_MODEL != "edision":
-							    self.signaltp = Dvbcsvb.fe.getSignalNoiseRatio() / 100
-							    self.signaltp1 = Dvbcsvb.fe.getStatus()
-							    self.signaltp2 = Dvbcsvb.fe.getSignalStrength() / 1000 * 1.4
-							if BOX_MODEL == "edision":
-							    self.signaltp = Dvbcsvb.fe.getSignalNoiseRatio() / 4456.21
-							    self.signaltp1 = Dvbcsvb.fe.getStatus()
-							    self.signaltp2 = Dvbcsvb.fe.getSignalStrength() / 819.1875
-							if BOX_MODEL == "edision" and self.size > 100000:
-							    self.signaltp = Dvbcsvb.fe.getSignalNoiseRatio() / 1000
-							    self.signaltp1 = Dvbcsvb.fe.getStatus()
-							    self.signaltp2 = Dvbcsvb.fe.getSignalStrength()
+					for x in range(2): #from 10
+						signal_data = get_signal_data(self.feid)
+						self.signaltp = signal_data['snr']
+						self.signaltp1 = signal_data['status']
+						self.signaltp2 = signal_data['strength']
 						ttime.sleep(.01)
 					tpstatus = ""
 					if self.signaltp1 == 0:
@@ -302,33 +294,12 @@ class ServiceScan:
 			T = self.foundServices - self.r
 
 			try:
-				for x in range(10):
-					if self.feid == 0:
-						if BOX_MODEL != "edision":
-							self.signaltp = Dvbcsva.fe.getSignalNoiseRatio() / 100
-							self.signaltp1 = Dvbcsva.fe.getStatus()
-							self.signaltp2 = Dvbcsva.fe.getSignalStrength() / 1000 * 1.4
-						if BOX_MODEL == "edision":
-							self.signaltp = Dvbcsva.fe.getSignalNoiseRatio() / 4456.21
-							self.signaltp1 = Dvbcsva.fe.getStatus()
-							self.signaltp2 = Dvbcsva.fe.getSignalStrength() / 819.1875
-						if BOX_MODEL == "edision" and self.size > 100000:
-							self.signaltp = Dvbcsva.fe.getSignalNoiseRatio() / 1000
-							self.signaltp1 = Dvbcsva.fe.getStatus()
-							self.signaltp2 = Dvbcsva.fe.getSignalStrength()
-					if self.feid == 1:
-						if BOX_MODEL != "edision":
-							self.signaltp = Dvbcsvb.fe.getSignalNoiseRatio() / 100
-							self.signaltp1 = Dvbcsvb.fe.getStatus()
-							self.signaltp2 = Dvbcsvb.fe.getSignalStrength() / 1000 * 1.4
-						if BOX_MODEL == "edision":
-							self.signaltp = Dvbcsvb.fe.getSignalNoiseRatio() / 4456.21
-							self.signaltp1 = Dvbcsvb.fe.getStatus()
-							self.signaltp2 = Dvbcsvb.fe.getSignalStrength() / 819.1875
-						if BOX_MODEL == "edision" and self.size > 100000:
-							self.signaltp = Dvbcsvb.fe.getSignalNoiseRatio() / 1000
-							self.signaltp1 = Dvbcsvb.fe.getStatus()
-							self.signaltp2 = Dvbcsvb.fe.getSignalStrength()
+				for x in range(2): #from 10
+					# Get signal data using our new function
+					signal_data = get_signal_data(self.feid)
+					self.signaltp = signal_data['snr']
+					self.signaltp1 = signal_data['status']
+					self.signaltp2 = signal_data['strength']
 					ttime.sleep(.01)
 				tpstatus = ""
 				if self.signaltp1 == 0:
@@ -505,21 +476,10 @@ class ServiceScan:
 		UnknownService ="(UnKnown Service)"
 		f = open(self.location, "a")
 		self.signal =""
-		for x in range(150):
-			if self.feid == 0:
-				if BOX_MODEL != "edision":
-					self.signal = Dvbcsva.fe.getSignalNoiseRatio() / 100
-				if BOX_MODEL == "edision":
-					self.signal = Dvbcsva.fe.getSignalNoiseRatio() / 4456.21
-				if BOX_MODEL == "edision" and self.size > 100000:
-					self.signal = Dvbcsva.fe.getSignalNoiseRatio() / 1000
-			if self.feid == 1:
-				if BOX_MODEL != "edision":
-					self.signal = Dvbcsvb.fe.getSignalNoiseRatio() / 100
-				if BOX_MODEL == "edision":
-					self.signal = Dvbcsvb.fe.getSignalNoiseRatio() / 4456.21
-				if BOX_MODEL == "edision" and self.size > 100000:
-					self.signal = Dvbcsvb.fe.getSignalNoiseRatio() / 1000
+		for x in range(2): #from 150
+			# Get signal data using our new function
+			signal_data = get_signal_data(self.feid)
+			self.signal = signal_data['snr']
 		newServiceName = self.scan.getLastServiceName()
 		newServiceName = newServiceName.rstrip('\x00')
 		newServiceRef = self.scan.getLastServiceRef()
