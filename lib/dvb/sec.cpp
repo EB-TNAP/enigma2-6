@@ -464,11 +464,12 @@ RESULT eDVBSatelliteEquipmentControl::prepare(iDVBFrontend &frontend, const eDVB
 						lof = lnb_param.m_lof_hi;  // 5750 MHz for horizontal polarization
 						voltage = VOLTAGE(18);
 					}
+				}
 				// Calculate local frequency with the new lof value
 				int local = absdiff(sat.frequency, lof);
 				frequency = ((((local * 2) / 125) + 1) / 2) * 125;
 				frontend.setData(eDVBFrontend::FREQ_OFFSET, sat.frequency - frequency);
-				}
+
 				else if (voltage_mode == eDVBSatelliteSwitchParameters::_0V)
 					voltage = iDVBFrontend::voltageOff;
 
