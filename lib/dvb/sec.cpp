@@ -452,26 +452,23 @@ RESULT eDVBSatelliteEquipmentControl::prepare(iDVBFrontend &frontend, const eDVB
 
 			int lof = (band&1)?lnb_param.m_lof_hi:lnb_param.m_lof_lo;
 
-				if (!is_unicable)
+			if(!is_unicable)
+			{
+				if (lnb_param.m_lof_threshold == 5450000 && lnb_param.m_lof_hi == 5750000 && lnb_param.m_lof_lo == 5150000)
 				{
-					// Check for special case: C-band bandstack LNB
-					if (lnb_param.m_lof_threshold == 5450000 && lnb_param.m_lof_hi == 5750000 && lnb_param.m_lof_lo == 5150000)
-					{
-						// C-band LNB detected, select LOF and voltage based on polarization
-						if (sat.polarisation & eDVBFrontendParametersSatellite::Polarisation_Vertical) {
-							lof = lnb_param.m_lof_lo;  // 5150 MHz
-							voltage = VOLTAGE(13);
-						} else {
-							lof = lnb_param.m_lof_hi;  // 5750 MHz
-							voltage = VOLTAGE(18);
-						}
+					// C-band bandstack LNB detected
+					if (sat.polarisation & eDVBFrontendParametersSatellite::Polarisation_Vertical) {
+						lof = lnb_param.m_lof_lo;  // 5150 MHz for vertical polarization
+						voltage = VOLTAGE(13);
+					} else {
+						lof = lnb_param.m_lof_hi;  // 5750 MHz for horizontal polarization
+						voltage = VOLTAGE(18);
 					}
-					// Calculate frequency and offset
-					int local = absdiff(sat.frequency, lof);
-					frequency = ((((local * 2) / 125) + 1) / 2) * 125;
-					frontend.setData(eDVBFrontend::FREQ_OFFSET, sat.frequency - frequency);
+				// Calculate local frequency with the new lof value
+				int local = absdiff(sat.frequency, lof);
+				frequency = ((((local * 2) / 125) + 1) / 2) * 125;
+				frontend.setData(eDVBFrontend::FREQ_OFFSET, sat.frequency - frequency);
 				}
-
 				else if (voltage_mode == eDVBSatelliteSwitchParameters::_0V)
 					voltage = iDVBFrontend::voltageOff;
 
