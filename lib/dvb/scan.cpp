@@ -1,4 +1,8 @@
 #include <fcntl.h>
+#include <set>
+#include <vector>
+#include <algorithm>
+
 #include <lib/dvb/idvb.h>
 #include <dvbsi++/descriptor_tag.h>
 #include <dvbsi++/service_descriptor.h>
@@ -12,6 +16,7 @@
 #include <dvbsi++/registration_descriptor.h>
 #include <dvbsi++/extension_descriptor.h>
 #include <dvbsi++/frequency_list_descriptor.h>
+#include <dvbsi++/descriptor_container.h>
 #include <lib/base/nconfig.h> // access to python config
 #include <lib/dvb/specs.h>
 #include <lib/dvb/esection.h>
@@ -60,8 +65,8 @@ eDVBScan::~eDVBScan()
 	m_PMT = 0;
 	m_VCT = 0;
 	
-	// Clean up connections
-	m_stateChanged_connection.disconnect();
+	// Release connection object
+	m_stateChanged_connection = 0;
 }
 
 int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTransportStreamID tsid)
@@ -598,7 +603,7 @@ void eDVBScan::processPMTStreams(const ProgramMapSection &pmt, bool &scrambled, 
  * @param isvideo [in/out] Flag to indicate video stream
  * @param is_scrambled [in/out] Flag to indicate scrambled stream
  */
-void eDVBScan::processDescriptors(const DescriptorList *descriptors, bool forced_video, bool forced_audio, int &isaudio, int &isvideo, int &is_scrambled)
+void eDVBScan::processDescriptors(const DescriptorContainer *descriptors, bool forced_video, bool forced_audio, int &isaudio, int &isvideo, int &is_scrambled)
 {
 	// Process each descriptor
 	for (DescriptorConstIterator desc = descriptors->begin(); desc != descriptors->end(); ++desc)
