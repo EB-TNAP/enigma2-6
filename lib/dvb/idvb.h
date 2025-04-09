@@ -826,25 +826,25 @@ namespace DVB_S2_MODCOD {
 		QPSK_8_9 = 10,
 		QPSK_9_10 = 11,
 		
-		_8PSK_3_5 = 12,
-		_8PSK_2_3 = 13,
-		_8PSK_3_4 = 14,
-		_8PSK_5_6 = 15,
-		_8PSK_8_9 = 16,
-		_8PSK_9_10 = 17,
+		PSK8_3_5 = 12,
+		PSK8_2_3 = 13,
+		PSK8_3_4 = 14,
+		PSK8_5_6 = 15,
+		PSK8_8_9 = 16,
+		PSK8_9_10 = 17,
 		
-		_16APSK_2_3 = 18,
-		_16APSK_3_4 = 19,
-		_16APSK_4_5 = 20,
-		_16APSK_5_6 = 21,
-		_16APSK_8_9 = 22,
-		_16APSK_9_10 = 23,
+		APSK16_2_3 = 18,
+		APSK16_3_4 = 19,
+		APSK16_4_5 = 20,
+		APSK16_5_6 = 21,
+		APSK16_8_9 = 22,
+		APSK16_9_10 = 23,
 		
-		_32APSK_3_4 = 24,
-		_32APSK_4_5 = 25,
-		_32APSK_5_6 = 26,
-		_32APSK_8_9 = 27,
-		_32APSK_9_10 = 28
+		APSK32_3_4 = 24,
+		APSK32_4_5 = 25,
+		APSK32_5_6 = 26,
+		APSK32_8_9 = 27,
+		APSK32_9_10 = 28
 	};
 	
 	// Helper array with required SNR values in dB * 10
@@ -881,27 +881,6 @@ namespace DVB_S2_MODCOD {
 		224,    // 32APSK 5/6
 		247,    // 32APSK 8/9
 		253     // 32APSK 9/10
-	};
-};
-
-// Define iFrontendInformation_ENUMS if it doesn't exist
-class iFrontendInformation_ENUMS
-{
-#ifdef SWIG
-	iFrontendInformation_ENUMS();
-	~iFrontendInformation_ENUMS();
-#endif
-public:
-	enum { 
-		bitErrorRate, 
-		signalPower, 
-		signalQuality, 
-		lockState, 
-		syncState, 
-		frontendNumber, 
-		signalQualitydB,
-		frontendStatus,
-		modcodValue, // New enum for MODCOD
 	};
 };
 

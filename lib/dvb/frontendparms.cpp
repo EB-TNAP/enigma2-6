@@ -9,6 +9,11 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
+// Define DTV_STAT_MODCOD if not defined in the DVB API
+#ifndef DTV_STAT_MODCOD
+#define DTV_STAT_MODCOD 92
+#endif
+
 
 DEFINE_REF(eDVBFrontendStatus);
 
