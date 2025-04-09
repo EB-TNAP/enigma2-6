@@ -130,7 +130,7 @@ public:
 		begin(m);
 		m_demux = demux;
 		m_reader = 0;
-		next->start(demux, spec);
+		next->start(demux.operator->(), spec);
 		return 0;
 	}
 
@@ -139,7 +139,7 @@ public:
 		begin(m);
 		m_demux = 0;
 		m_reader = reader;
-		next->start(reader, spec);
+		next->start(reader.operator->(), spec);
 		return 0;
 	}
 
@@ -234,11 +234,11 @@ public:
 			spec.flags &= ~(eDVBTableSpec::tfAnyVersion|eDVBTableSpec::tfThisVersion|eDVBTableSpec::tfHaveTimeout);
 			if (m_demux)
 			{
-				next->eGTable::start(m_demux, spec);
+				next->eGTable::start(m_demux.operator->(), spec);
 			}
 			else if (m_reader)
 			{
-				next->eGTable::start(m_reader, spec);
+				next->eGTable::start(m_reader.operator->(), spec);
 			}
 		}
 	}

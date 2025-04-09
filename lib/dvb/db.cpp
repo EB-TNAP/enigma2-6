@@ -326,8 +326,8 @@ int checkFilter(const eServiceReferenceDVB &ref, const int &filter)
 		tmp &= ~(eServiceReference::dRadio|eServiceReference::dDVD);
 		break;
 	}
-	int res = 0;
-	return res; // Return value to fix compilation error
+	// Return the filtered value
+	return tmp;
 }
 
 int eDVBService::checkFilter(const eServiceReferenceDVB &ref, const eDVBChannelQuery &query)
@@ -3475,4 +3475,5 @@ RESULT eDVBChannelQuery::compile(ePtr<eDVBChannelQuery> &res, std::string query)
 	return r;
 }
 
-DEFINE_REF(eDVBChannelQuery);
+// Commented out to prevent redefinition errors
+// DEFINE_REF(eDVBChannelQuery);

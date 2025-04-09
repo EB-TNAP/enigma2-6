@@ -14,7 +14,7 @@
 #include <connection.h>
 #include <lib/base/nconfig.h> // access to python config
 #include <lib/base/estring.h>
-#include <lib/dvb/sec.h> // For eDVBDiseqcCommand, etc.
+// Removed this include to break circular dependency
 
 #define CAID_LIST std::list<uint16_t>
 
@@ -233,7 +233,7 @@ public:
 	}
 
 	eServiceReferenceDVB(eDVBNamespace dvbnamespace, eTransportStreamID transport_stream_id, eOriginalNetworkID original_network_id, eServiceID service_id, int service_type)
-		:eServiceReference(eServiceReference::idDVB, eServiceReference::flagInvisible)
+		:eServiceReference(eServiceReference::idDVB, 0)
 	{
 		setTransportStreamID(transport_stream_id);
 		setOriginalNetworkID(original_network_id);
@@ -607,6 +607,11 @@ public:
 // Do not redefine iFrontendInformation_ENUMS here - it's already defined in iservice.h
 
 #include <lib/service/iservice.h> // Include this to use iFrontendInformation_ENUMS
+
+// Forward declarations for classes defined in dvb/sec.h
+class eDVBDiseqcCommand;
+class eSecCommandList;
+class iDVBSatelliteEquipmentControl;
 
 // Use iFrontendInformation from iservice.h instead of redefining it
 /* class iFrontendInformation: public iObject, public iFrontendInformation_ENUMS
