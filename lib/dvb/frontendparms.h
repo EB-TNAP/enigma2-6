@@ -70,7 +70,6 @@ public:
 	bool no_rotor_command_on_tune;
 	unsigned int frequency, symbol_rate;
 	int polarisation, fec, inversion, orbital_position, system, modulation, rolloff, pilot, is_id, pls_mode, pls_code, t2mi_plp_id, t2mi_pid;
-	int modcod; // MODCOD value for DVB-S2
 };
 SWIG_ALLOW_OUTPUT_SIMPLE(eDVBFrontendParametersSatellite);
 
@@ -238,9 +237,6 @@ public:
 	int getGuardInterval() const;
 	int getHierarchyInformation() const;
 	int getPlpId() const;
-	virtual int getMODCOD() const { return 0; }
-	virtual std::string getMODCODDescription() const { return ""; }
-	virtual int getRequiredSNR() const { return 0; }
 };
 
 class eDVBSatelliteTransponderData : public eDVBTransponderData
@@ -249,10 +245,9 @@ class eDVBSatelliteTransponderData : public eDVBTransponderData
 
 	eDVBFrontendParametersSatellite transponderParameters;
 	int frequencyOffset;
-	int m_modcod;
 
 public:
-	eDVBSatelliteTransponderData(struct dtv_property *dtvproperties, unsigned int propertycount, eDVBFrontendParametersSatellite &transponderparms, int frequencyoffset, bool original, int modcod = 0);
+	eDVBSatelliteTransponderData(struct dtv_property *dtvproperties, unsigned int propertycount, eDVBFrontendParametersSatellite &transponderparms, int frequencyoffset, bool original);
 
 	std::string getTunerType() const;
 	int getInversion() const;
@@ -270,11 +265,6 @@ public:
 	int getPLSCode() const;
 	int getT2MIPlpId() const;
 	int getT2MIPid() const;
-	
-	// MODCOD related methods
-	int getMODCOD() const { return m_modcod; }
-	std::string getMODCODDescription() const;
-	int getRequiredSNR() const;
 };
 
 class eDVBCableTransponderData : public eDVBTransponderData

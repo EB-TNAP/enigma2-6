@@ -14,7 +14,6 @@
 #include <connection.h>
 #include <lib/base/nconfig.h> // access to python config
 #include <lib/base/estring.h>
-// Removed this include to break circular dependency
 
 #define CAID_LIST std::list<uint16_t>
 
@@ -206,19 +205,14 @@ public:
 	eDVBNamespace getDVBNamespace() const { return eDVBNamespace(data[4]); }
 	void setDVBNamespace(eDVBNamespace dvbnamespace) { data[4]=dvbnamespace.get(); }
 
-	eDVBChannelID getChannelID() const { return eDVBChannelID(getDVBNamespace(), getTransportStreamID(), getOriginalNetworkID()); }
-	void setChannelID(const eDVBChannelID &channelid)
-	{
-		setDVBNamespace(channelid.dvbnamespace);
-		setTransportStreamID(channelid.transport_stream_id);
-		setOriginalNetworkID(channelid.original_network_id);
-	}
-
 	eServiceID getParentServiceID() const { return eServiceID(data[5]); }
 	void setParentServiceID( eServiceID sid ) { data[5]=sid.get(); }
 
 	eTransportStreamID getParentTransportStreamID() const { return eTransportStreamID(data[6]); }
 	void setParentTransportStreamID( eTransportStreamID tsid ) { data[6]=tsid.get(); }
+
+	int getSourceID() const { return data[7]; }
+	void setSourceID(int sourceid) { data[7] = sourceid; }
 
 	eServiceReferenceDVB getParentServiceReference() const
 	{
@@ -229,10 +223,12 @@ public:
 			tmp.data[2] = data[6];
 			tmp.data[5] = tmp.data[6] = 0;
 		}
+		else
+			tmp.type = idInvalid;
 		return tmp;
 	}
 
-	eServiceReferenceDVB(eDVBNamespace dvbnamespace, eTransportStreamID transport_stream_id, eOriginalNetworkID original_network_id, eServiceID service_id, int service_type)
+	eServiceReferenceDVB(eDVBNamespace dvbnamespace, eTransportStreamID transport_stream_id, eOriginalNetworkID original_network_id, eServiceID service_id, int service_type, int source_id = 0)
 		:eServiceReference(eServiceReference::idDVB, 0)
 	{
 		setTransportStreamID(transport_stream_id);
@@ -240,19 +236,37 @@ public:
 		setDVBNamespace(dvbnamespace);
 		setServiceID(service_id);
 		setServiceType(service_type);
+		setSourceID(source_id);
 	}
 
-	// only for NVOD reference services
-	eServiceReferenceDVB(eDVBNamespace dvbnamespace, eTransportStreamID transport_stream_id, eOriginalNetworkID original_network_id, eServiceID service_id, int service_type, eServiceID parent_service_id, eTransportStreamID parent_transport_stream_id)
-		:eServiceReference(eServiceReference::idDVB, eServiceReference::flagInvisible)
+	void set(const eDVBChannelID &chid)
 	{
-		setTransportStreamID(transport_stream_id);
-		setOriginalNetworkID(original_network_id);
-		setDVBNamespace(dvbnamespace);
-		setServiceID(service_id);
-		setServiceType(service_type);
-		setParentServiceID(parent_service_id);
-		setParentTransportStreamID(parent_transport_stream_id);
+		setDVBNamespace(chid.dvbnamespace);
+		setOriginalNetworkID(chid.original_network_id);
+		setTransportStreamID(chid.transport_stream_id);
+	}
+
+	void getChannelID(eDVBChannelID &chid) const
+	{
+		chid = eDVBChannelID(getDVBNamespace(), getTransportStreamID(), getOriginalNetworkID());
+	}
+
+	bool getSROriginal(eServiceReferenceDVB &sref) const
+	{
+		std::string s_ref = this->toString();
+		std::string sr_url = eConfigManager::getConfigValue("config.misc.softcam_streamrelay_url");
+		sr_url = replace_all(replace_all(replace_all(sr_url, "[", ""), "]", ""), ", ", ".");
+		std::string sr_port = eConfigManager::getConfigValue("config.misc.softcam_streamrelay_port");
+		if (s_ref.find(sr_url + "%3a" + sr_port) != std::string::npos) {
+			std::vector<std::string> s_split = split(s_ref, ":");
+			std::string url_sr = s_split[s_split.size() - 2];
+			std::vector<std::string> sr_split = split(url_sr, "/");
+			std::string ref_orig = sr_split.back();
+			ref_orig = replace_all(ref_orig, "%3a", ":");
+			sref = eServiceReferenceDVB(ref_orig);
+			return true;
+		}
+		return false;
 	}
 
 	eServiceReferenceDVB()
@@ -264,269 +278,202 @@ public:
 		:eServiceReference(string)
 	{
 	}
+};
 
-	eServiceReferenceDVB(const eServiceReference &ref)
-		:eServiceReference(ref)
+
+////////////////// TODO: we need an interface here, but what exactly?
+
+#include <set>
+// btw, still implemented in db.cpp. FIX THIS, TOO.
+
+class eDVBChannelQuery;
+
+class eDVBService: public iStaticServiceInformation
+{
+	DECLARE_REF(eDVBService);
+	int *m_cache;
+	void initCache();
+	void copyCache(int *source);
+public:
+	enum cacheID
 	{
-	}
+		cVPID, cMPEGAPID, cTPID, cPCRPID, cAC3PID,
+		cVTYPE, cACHANNEL, cAC3DELAY, cPCMDELAY,
+		cSUBTITLE, cAACHEAPID=12, cDDPPID, cAACAPID,
+		cDATAPID, cPMTPID, cDRAAPID, cAC4PID, cacheMax
+	};
+
+	std::string m_reference_str;
+	int getCacheEntry(cacheID);
+	void setCacheEntry(cacheID, int);
+	void setServiceRef(std::string sref) { m_reference_str = sref; }
+
+	bool cacheEmpty();
+
+	eDVBService();
+		/* m_service_name_sort is uppercase, with special chars removed, to increase sort performance. */
+	std::string m_service_name, m_service_name_sort;
+	std::string m_provider_name;
+
+	void genSortName();
+
+	int m_flags;
+	enum
+	{
+		dxNoSDT=1,                 // don't fetch SDT
+		dxDontshow=2,              // don't show service in all services list
+		dxNoDVB=4,                 // dont use PMT for this service ( use cached pids )
+		dxHoldName=8,              // don't change service name if label differs in the SDT
+		dxNewFound=64,             // show in last scanned bouquet ( until next restart )
+		dxIsDedicated3D=128,       // 3D channel
+		dxIsParentalProtected=256, // service with parental protection
+		dxIsScrambledPMT=1024,     // identical to dxNoDVB when used in pmt.cpp and in servicedvbstream.cpp used to record cached pids
+		dxCenterDVBSubs=2048,      // centre DVB subtitles
+		dxNoEIT=4096,              // disable EIT event parsing when using EPG_IMPORT
+	};
+
+	bool usePMT() const { return !(m_flags & dxNoDVB); }
+	bool isHidden() const { return (m_flags & dxDontshow || m_flags & dxIsParentalProtected); }
+	bool isDedicated3D() const { return m_flags & dxIsDedicated3D; }
+	bool doCenterDVBSubs() const { return m_flags & dxCenterDVBSubs; }
+	bool useEIT() const { return !(m_flags & dxNoEIT); }
+
+	CAID_LIST m_ca;
+
+	virtual ~eDVBService();
+
+	eDVBService &operator=(const eDVBService &);
+
+	// iStaticServiceInformation
+	RESULT getName(const eServiceReference &ref, std::string &name);
+	RESULT getEvent(const eServiceReference &ref, ePtr<eServiceEvent> &ptr, time_t start_time);
+	bool isCrypted();
+	int isPlayable(const eServiceReference &ref, const eServiceReference &ignore, bool simulate=false);
+	ePtr<iDVBTransponderData> getTransponderData(const eServiceReference &ref);
+
+		/* for filtering: */
+	int checkFilter(const eServiceReferenceDVB &ref, const eDVBChannelQuery &query);
 };
 
-#endif // SWIG
+//////////////////
 
-SWIG_IGNORE(eDVBFrontendParametersSatellite);
-class eDVBFrontendParametersSatellite
+class iDVBChannel;
+class iDVBDemux;
+class iDVBFrontendParameters;
+
+class iDVBChannelListQuery: public iObject
+{
+public:
+	virtual RESULT getNextResult(eServiceReferenceDVB &ref)=0;
+	virtual int compareLessEqual(const eServiceReferenceDVB &a, const eServiceReferenceDVB &b)=0;
+};
+
+class eDVBChannelQuery: public iObject
+{
+	DECLARE_REF(eDVBChannelQuery);
+public:
+	enum
+	{
+		tName,
+		tProvider,
+		tType,
+		tBouquet,
+		tSatellitePosition,
+		tChannelID,
+		tAND,
+		tOR,
+		tAny,
+		tFlags
+	};
+
+	int m_type;
+	int m_inverse;
+
+	std::string m_string;
+	int m_int;
+	eDVBChannelID m_channelid;
+
+		/* sort is only valid in root, and must be from the enum above. */
+	int m_sort;
+	std::string m_bouquet_name;
+
+	static RESULT compile(ePtr<eDVBChannelQuery> &res, std::string query);
+
+	ePtr<eDVBChannelQuery> m_p1, m_p2;
+};
+
+class iDVBChannelList: public iObject
+{
+public:
+	virtual RESULT removeService(const eServiceReference &service)=0;
+	virtual RESULT removeServices(eDVBChannelID chid=eDVBChannelID(), unsigned int orb_pos=0xFFFFFFFF)=0;
+	virtual RESULT removeServices(int dvb_namespace=-1, int tsid=-1, int onid=-1, unsigned int orb_pos=0xFFFFFFFF)=0;
+	virtual RESULT removeServices(iDVBFrontendParameters *feparm)=0;
+	virtual RESULT addFlag(const eServiceReference &service, unsigned int flagmask=0xFFFFFFFF)=0;
+	virtual RESULT removeFlag(const eServiceReference &service, unsigned int flagmask=0xFFFFFFFF)=0;
+	virtual RESULT removeFlags(unsigned int flagmask, eDVBChannelID chid=eDVBChannelID(), unsigned int orb_pos=0xFFFFFFFF)=0;
+	virtual RESULT removeFlags(unsigned int flagmask, int dvb_namespace=-1, int tsid=-1, int onid=-1, unsigned int orb_pos=0xFFFFFFFF)=0;
+	virtual RESULT addChannelToList(const eDVBChannelID &id, iDVBFrontendParameters *feparm)=0;
+	virtual RESULT removeChannel(const eDVBChannelID &id)=0;
+
+	virtual RESULT getChannelFrontendData(const eDVBChannelID &id, ePtr<iDVBFrontendParameters> &parm)=0;
+
+	virtual RESULT addService(const eServiceReferenceDVB &reference, eDVBService *service)=0;
+	virtual RESULT getService(const eServiceReferenceDVB &reference, ePtr<eDVBService> &service)=0;
+	virtual RESULT flush()=0;
+
+	virtual RESULT getBouquet(const eServiceReference &ref,  eBouquet* &bouquet)=0;
+
+	virtual RESULT startQuery(ePtr<iDVBChannelListQuery> &query, eDVBChannelQuery *q, const eServiceReference &source)=0;
+};
+
+#endif  // SWIG
+
+class eDVBFrontendParametersSatellite;
+class eDVBFrontendParametersCable;
+class eDVBFrontendParametersTerrestrial;
+class eDVBFrontendParametersATSC;
+
+class iDVBFrontendParameters: public iObject
 {
 public:
 #ifdef SWIG
-	eDVBFrontendParametersSatellite();
-	~eDVBFrontendParametersSatellite();
+	iDVBFrontendParameters();
+	~iDVBFrontendParameters();
 #endif
-	enum {
-		Polarisation_Horizontal, Polarisation_Vertical, Polarisation_CircularLeft, Polarisation_CircularRight
-	};
-
-	enum {
-		Inversion_Off, Inversion_On, Inversion_Unknown
-	};
-
-	enum {
-		FEC_Auto=0, FEC_1_2=1, FEC_2_3=2, FEC_3_4=3, FEC_5_6=4, FEC_7_8=5, FEC_8_9=6, FEC_3_5=7, FEC_4_5=8, FEC_9_10=9, FEC_None=15
-	};
-
-	enum {
-		System_DVB_S, System_DVB_S2
-	};
-
-	enum {
-		Modulation_Auto, Modulation_QPSK, Modulation_8PSK, Modulation_QAM16
-	};
-
-	// dvb-s2
-	enum {
-		RollOff_alpha_0_35, RollOff_alpha_0_25, RollOff_alpha_0_20, RollOff_auto
-	};
-
-	enum {
-		Pilot_Off, Pilot_On, Pilot_Unknown
-	};
-
-	int no_rotor_command_on_tune;
-	unsigned int frequency, symbol_rate;
-	int polarisation, fec, inversion, orbital_position, system, modulation, rolloff, pilot;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<eDVBFrontendParametersSatellite>, eDVBFrontendParametersSatellite);
-
-SWIG_IGNORE(eDVBFrontendParametersCable);
-class eDVBFrontendParametersCable
-{
-public:
-#ifdef SWIG
-	eDVBFrontendParametersCable();
-	~eDVBFrontendParametersCable();
-#endif
-	enum {
-		Inversion_Off, Inversion_On, Inversion_Unknown
-	};
-
-	/*
-	 * WARNING! FEC values and defines, are different from DVB-S(2) implementation!
-	 * FEC_Auto and FEC_None are the same as in DVB-S(2), but the values for the other
-	 * constants are different!
-	 */
-
-	enum {
-		FEC_Auto=0, FEC_1_2=1, FEC_2_3=2, FEC_3_4=3, FEC_5_6=4, FEC_7_8=5, FEC_8_9=6, FEC_None=15
-	};
-
-	enum {
-		System_DVB_C_ANNEX_A, System_DVB_C_ANNEX_C
-	};
-
-	enum {
-		Modulation_Auto, Modulation_QAM16, Modulation_QAM32, Modulation_QAM64, Modulation_QAM128, Modulation_QAM256
-	};
-
-	unsigned int frequency, symbol_rate;
-	int modulation, inversion, fec_inner, system;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<eDVBFrontendParametersCable>, eDVBFrontendParametersCable);
-
-SWIG_IGNORE(eDVBFrontendParametersATSC);
-class eDVBFrontendParametersATSC
-{
-public:
-#ifdef SWIG
-	eDVBFrontendParametersATSC();
-	~eDVBFrontendParametersATSC();
-#endif
-	enum {
-		Inversion_Off, Inversion_On, Inversion_Unknown
-	};
-
-	enum {
-		System_ATSC, System_DVB_C_ANNEX_B
-	};
-
-	enum {
-		Modulation_Auto, Modulation_QAM16, Modulation_QAM32, Modulation_QAM64, Modulation_QAM128, Modulation_QAM256, Modulation_VSB_8, Modulation_VSB_16
-	};
-
-	unsigned int frequency;
-	int modulation, inversion, system;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<eDVBFrontendParametersATSC>, eDVBFrontendParametersATSC);
-
-SWIG_IGNORE(eDVBFrontendParametersTerrestrial);
-class eDVBFrontendParametersTerrestrial
-{
-public:
-#ifdef SWIG
-	eDVBFrontendParametersTerrestrial();
-	~eDVBFrontendParametersTerrestrial();
-#endif
-	enum {
-		Bandwidth_8MHz, Bandwidth_7MHz, Bandwidth_6MHz, Bandwidth_Auto, Bandwidth_5MHz, Bandwidth_1_712MHz, Bandwidth_10MHz
-	};
-
-	enum {
-		FEC_1_2=0, FEC_2_3=1, FEC_3_4=2, FEC_5_6=3, FEC_7_8=4, FEC_Auto=5, FEC_6_7=6, FEC_8_9=7
-	};
-
-	enum {
-		System_DVB_T_T2, System_DVB_T, System_DVB_T2
-	};
-
-	enum {
-		TransmissionMode_2k, TransmissionMode_8k, TransmissionMode_Auto, TransmissionMode_4k, TransmissionMode_1k, TransmissionMode_16k, TransmissionMode_32k
-	};
-
-	enum {
-		GuardInterval_1_32, GuardInterval_1_16, GuardInterval_1_8, GuardInterval_1_4, GuardInterval_Auto, GuardInterval_1_128, GuardInterval_19_128, GuardInterval_19_256
-	};
-
-	enum {
-		Hierarchy_None, Hierarchy_1, Hierarchy_2, Hierarchy_4, Hierarchy_Auto
-	};
-
-	enum {
-		Modulation_QPSK, Modulation_QAM16, Modulation_QAM64, Modulation_Auto, Modulation_QAM256
-	};
-
-	enum {
-		Inversion_Off, Inversion_On, Inversion_Unknown
-	};
-
-	unsigned int frequency;
-	int bandwidth;
-	int code_rate_HP, code_rate_LP;
-	int modulation;
-	int transmission_mode;
-	int guard_interval;
-	int hierarchy;
-	int inversion;
-	int system;
-	int plp_id;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<eDVBFrontendParametersTerrestrial>, eDVBFrontendParametersTerrestrial);
-
-class eDVBEvent
-{
-public:
-	time_t m_start_time;
-	int m_duration;
-	std::string m_event_name;
-	std::string m_short_description;
-	std::string m_extended_description;
-};
-
-class eComponentData
-{
-public:
-	friend class eServiceEvent;
-	SWIG_ALLOW_OUTPUT_SIMPLE(eComponentData);
-private:
-	int m_streamContent;
-	int m_componentType;
-	int m_componentTag;
-	std::string m_iso639LanguageCode;
-	std::string m_text;
-public:
-	eComponentData(int streamContent, int componentType, int componentTag, const std::string &iso639LanguageCode, const std::string &text) :
-		m_streamContent(streamContent),
-		m_componentType(componentType),
-		m_componentTag(componentTag),
-		m_iso639LanguageCode(iso639LanguageCode),
-		m_text(text)
-	{}
-	eComponentData():
-		m_streamContent(0),
-		m_componentType(0),
-		m_componentTag(0)
-	{}
-	int getStreamContent(void) const { return m_streamContent; }
-	int getComponentType(void) const { return m_componentType; }
-	int getComponentTag(void) const { return m_componentTag; }
-	const std::string &getIso639LanguageCode(void) const { return m_iso639LanguageCode; }
-	const std::string &getText(void) const { return m_text; }
-};
-
+	enum { flagOnlyFree = 1 };
+	virtual SWIG_VOID(RESULT) getSystem(int &SWIG_OUTPUT) const = 0;
+	virtual SWIG_VOID(RESULT) getDVBS(eDVBFrontendParametersSatellite &SWIG_OUTPUT) const = 0;
+	virtual SWIG_VOID(RESULT) getDVBC(eDVBFrontendParametersCable &SWIG_OUTPUT) const = 0;
+	virtual SWIG_VOID(RESULT) getDVBT(eDVBFrontendParametersTerrestrial &SWIG_OUTPUT) const = 0;
+	virtual SWIG_VOID(RESULT) getATSC(eDVBFrontendParametersATSC &SWIG_OUTPUT) const = 0;
+	virtual SWIG_VOID(RESULT) getFlags(unsigned int &SWIG_OUTPUT) const = 0;
+	virtual RESULT setDVBT(const eDVBFrontendParametersTerrestrial &p) = 0;
 #ifndef SWIG
-class eServiceEvent: public iObject
-{
-	DECLARE_REF(eServiceEvent);
-public:
-	int m_begin, m_duration;
-	int m_event_id;
-	std::string m_service_reference;
-	std::string m_event_name;
-	std::string m_short_description;
-	std::string m_extended_description;
-	std::vector<eComponentData> m_component_data;
-	std::string m_rating;
-
-	eServiceEvent();
+	virtual SWIG_VOID(RESULT) calculateDifference(const iDVBFrontendParameters *parm, int &, bool exact) const = 0;
+	virtual SWIG_VOID(RESULT) getHash(unsigned long &) const = 0;
+	virtual SWIG_VOID(RESULT) calcLockTimeout(unsigned int &) const = 0;
 #endif
 };
-SWIG_TEMPLATE_TYPEDEF(ePtr<eServiceEvent>, eServiceEvent);
+SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBFrontendParameters>, iDVBFrontendParametersPtr);
 
-class iDVBSectionListener
+#define MAX_DISEQC_LENGTH  16
+
+class eDVBDiseqcCommand
 {
-public:
-	virtual ~iDVBSectionListener() {}
-	virtual void handleSection(const uint8_t *data, unsigned int size, unsigned int pid) = 0;
-};
-
-/* Implemented Interfaces: */
-
 #ifndef SWIG
-
-class iDVBPVRChannel_ENUMS
-{
 public:
-	enum
-	{
-		state_idle,		//0
-		state_preparing,	//1
-		state_tuning,	//2
-		state_running,	//3
-		state_paused,	//4
-		state_seeking,	//5
-		state_eof		//6
-	};
-	enum
-	{
-		timeshift_enabled=1
-	};
+#endif
+	int len;
+	uint8_t data[MAX_DISEQC_LENGTH];
+#ifdef SWIG
+public:
+#endif
+	void setCommandString(const char *str);
 };
 
-class iDVBPVRService_ENUMS
-{
-public:
-	enum
-	{
-		canDescent=1
-	};
-};
+class iDVBSatelliteEquipmentControl;
+class eSecCommandList;
 
 class iDVBFrontend_ENUMS
 {
@@ -539,23 +486,6 @@ public:
 	enum { stateIdle, stateTuning, stateFailed, stateLock, stateLostLock, stateClosed };
 	enum { toneOff, toneOn };
 	enum { voltageOff, voltage13, voltage18, voltage13_5, voltage18_5, voltage5_terrestrial };
-	
-	// Frontend information enum values
-	enum { 
-		bitErrorRate, 
-		snrValue, 
-		signalQuality, 
-		signalQualitydB, 
-		signalPower, 
-		lockState, 
-		syncState, 
-		frontendNumber, 
-		frontendStatus,
-		frequency,
-		symbolRate,
-		isUsbTuner,
-		modcodValue  // New enum for MODCOD information
-	};
 };
 
 class iDVBFrontendStatus:  public iDVBFrontend_ENUMS, public iObject
@@ -598,414 +528,288 @@ public:
 	virtual int getGuardInterval() const = 0;
 	virtual int getHierarchyInformation() const = 0;
 	virtual int getPlpId() const = 0;
-	virtual int getMODCOD() const = 0;
-	virtual std::string getMODCODDescription() const = 0;
-	virtual int getRequiredSNR() const = 0;
 };
 
-// Adding MODCOD value to the existing iDVBFrontend_ENUMS
-// Do not redefine iFrontendInformation_ENUMS here - it's already defined in iservice.h
-
-#include <lib/service/iservice.h> // Include this to use iFrontendInformation_ENUMS
-
-// Forward declarations for classes defined in dvb/sec.h
-class eDVBDiseqcCommand;
-class eSecCommandList;
-class iDVBSatelliteEquipmentControl;
-
-// Use iFrontendInformation from iservice.h instead of redefining it
-/* class iFrontendInformation: public iObject, public iFrontendInformation_ENUMS
+class iDVBFrontendData: public iDVBFrontend_ENUMS, public iObject
 {
 public:
-	virtual int getFrontendInfo(int w)=0;
-	virtual SWIG_VOID(RESULT) getLockStatus(int &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) getFrontendStatus(int &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) getTransponderData(struct eDVBTransponderData &SWIG_OUTPUT, bool SWIG_DEFAULT(original))=0;
-		/* read only the frontend tuner data, without touching the current state */
-	virtual SWIG_VOID(RESULT) getFrontendData(struct eDVBFrontendParametersSatellite &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) getFrontendData(struct eDVBFrontendParametersCable &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) getFrontendData(struct eDVBFrontendParametersTerrestrial &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) getFrontendData(struct eDVBFrontendParametersATSC &SWIG_OUTPUT)=0;
-};*/
+	virtual int getNumber() const = 0;
+	virtual std::string getTypeDescription() const = 0;
+};
 
-class iDVBFrontend: public iObject, public iDVBFrontend_ENUMS
+class iDVBFrontend: public iDVBFrontend_ENUMS, public iObject
 {
 public:
-	virtual RESULT tune(const iDVBFrontendParameters &where)=0;
-	virtual int getCapabilities()=0;
-	virtual RESULT getState()=0;
+	virtual RESULT tune(const iDVBFrontendParameters &where, bool blindscan = false)=0;
+	virtual int closeFrontend(bool force = false, bool no_delayed = false)=0;
+	virtual void reopenFrontend()=0;
+#ifndef SWIG
+	virtual RESULT connectStateChange(const sigc::slot<void(iDVBFrontend*)> &stateChange, ePtr<eConnection> &connection)=0;
+#endif
+	virtual RESULT getState(int &SWIG_OUTPUT)=0;
 	virtual RESULT setTone(int tone)=0;
 	virtual RESULT setVoltage(int voltage)=0;
 	virtual RESULT sendDiseqc(const eDVBDiseqcCommand &diseqc)=0;
 	virtual RESULT sendToneburst(int burst)=0;
 #ifndef SWIG
-	virtual RESULT setDeliverySystem(const char *type)=0;
-#endif
 	virtual RESULT setSEC(iDVBSatelliteEquipmentControl *sec)=0;
 	virtual RESULT setSecSequence(eSecCommandList &list)=0;
-	virtual RESULT getData(int num, long &data)=0;
-	virtual RESULT setData(int num, long val)=0;
-		/* 0 means: not compatible. other values are a priority. highest wins. */
-	virtual int isCompatibleWith(ePtr<iDVBFrontendParameters> &feparm)=0;
+#endif
 	virtual int readFrontendData(int type)=0;
 	virtual void getFrontendStatus(ePtr<iDVBFrontendStatus> &dest)=0;
 	virtual void getTransponderData(ePtr<iDVBTransponderData> &dest, bool original)=0;
 	virtual void getFrontendData(ePtr<iDVBFrontendData> &dest)=0;
+#ifndef SWIG
+	virtual RESULT getData(int num, long &data)=0;
+	virtual RESULT setData(int num, long val)=0;
+		/* 0 means: not compatible. other values are a priority. */
+	virtual int isCompatibleWith(ePtr<iDVBFrontendParameters> &feparm, bool is_configured_sat = false)=0;
+#endif
+	virtual bool setDeliverySystem(const char *type)=0;
 };
 SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBFrontend>, iDVBFrontendPtr);
 
-// MODCOD constants and SNR requirements for DVB-S2
-namespace DVB_S2_MODCOD {
-    enum {
-        DUMMY = 0,
-        QPSK_1_4 = 1,
-        QPSK_1_3 = 2,
-        QPSK_2_5 = 3,
-        QPSK_1_2 = 4,
-        QPSK_3_5 = 5,
-        QPSK_2_3 = 6,
-        QPSK_3_4 = 7,
-        QPSK_4_5 = 8,
-        QPSK_5_6 = 9,
-        QPSK_8_9 = 10,
-        QPSK_9_10 = 11,
-        PSK8_3_5 = 12,
-        PSK8_2_3 = 13,
-        PSK8_3_4 = 14,
-        PSK8_5_6 = 15,
-        PSK8_8_9 = 16,
-        PSK8_9_10 = 17,
-        APSK16_2_3 = 18,
-        APSK16_3_4 = 19,
-        APSK16_4_5 = 20,
-        APSK16_5_6 = 21,
-        APSK16_8_9 = 22,
-        APSK16_9_10 = 23,
-        APSK32_3_4 = 24,
-        APSK32_4_5 = 25,
-        APSK32_5_6 = 26,
-        APSK32_8_9 = 27,
-        APSK32_9_10 = 28
-    };
-    
-    // Helper array with required SNR values in dB * 10
-    static const int requiredSNR_x10[] = {
-        0,    // DUMMY
-        10,   // QPSK_1_4: 1.0 dB
-        31,   // QPSK_1_3: 3.1 dB
-        33,   // QPSK_2_5: 3.3 dB
-        41,   // QPSK_1_2: 4.1 dB
-        48,   // QPSK_3_5: 4.8 dB
-        52,   // QPSK_2_3: 5.2 dB
-        60,   // QPSK_3_4: 6.0 dB
-        64,   // QPSK_4_5: 6.4 dB
-        67,   // QPSK_5_6: 6.7 dB
-        74,   // QPSK_8_9: 7.4 dB
-        75,   // QPSK_9_10: 7.5 dB
-        78,   // 8PSK_3_5: 7.8 dB
-        83,   // 8PSK_2_3: 8.3 dB
-        94,   // 8PSK_3_4: 9.4 dB
-        107,  // 8PSK_5_6: 10.7 dB
-        118,  // 8PSK_8_9: 11.8 dB
-        120,  // 8PSK_9_10: 12.0 dB
-        110,  // 16APSK_2_3: 11.0 dB
-        123,  // 16APSK_3_4: 12.3 dB
-        131,  // 16APSK_4_5: 13.1 dB
-        135,  // 16APSK_5_6: 13.5 dB
-        145,  // 16APSK_8_9: 14.5 dB
-        148,  // 16APSK_9_10: 14.8 dB
-        161,  // 32APSK_3_4: 16.1 dB
-        171,  // 32APSK_4_5: 17.1 dB
-        176,  // 32APSK_5_6: 17.6 dB
-        194,  // 32APSK_8_9: 19.4 dB
-        198   // 32APSK_9_10: 19.8 dB
-    };
+#ifndef SWIG
+class iDVBSatelliteEquipmentControl: public iObject
+{
+public:
+	virtual RESULT prepare(iDVBFrontend &frontend, const eDVBFrontendParametersSatellite &sat, int &frequency, int frontend_id, unsigned int timeout)=0;
+	virtual void prepareTurnOffSatCR(iDVBFrontend &frontend)=0;
+	virtual int canTune(const eDVBFrontendParametersSatellite &feparm, iDVBFrontend *fe, int frontend_id, int *highest_score_lnb=0)=0;
+	virtual void setRotorMoving(int slotid, bool)=0;
+	virtual RESULT resetAdvancedsatposdependsRoot(int link)=0;
+	virtual bool isOrbitalPositionConfigured(int orbital_position)=0;
+	virtual bool tunerLinkedInUse(int root)=0;
+	virtual void forceUpdateRotorPos(int slot, int orbital_position)=0;
 };
 
-class iDVBChannel_ENUMS
+struct eDVBCIRouting
 {
-#ifdef SWIG
-	iDVBChannel_ENUMS();
-	~iDVBChannel_ENUMS();
-#endif
+	int enabled;
+};
+#endif // SWIG
+
+SWIG_IGNORE(iDVBChannel);
+class iDVBChannel: public iObject
+{
 public:
-	enum 
-	{
-		state_idle,
-		state_tuning,
-		state_failed,
-		state_unavailable,
-		state_ok,
-		state_last_instance
-	};
+		/* direct frontend access for raw channels and/or status inquiries. */
+	virtual SWIG_VOID(RESULT) getFrontend(ePtr<iDVBFrontend> &SWIG_OUTPUT)=0;
+	virtual RESULT requestTsidOnid() { return -1; }
+	PSignal2<void, int, int> receivedTsidOnid;
+	virtual int reserveDemux() { return -1; }
+	virtual int getDvrId() { return -1; }
+#ifndef SWIG
 	enum
 	{
-		flagPreferredLock=1
+		state_idle,        /* not yet tuned */
+		state_tuning,      /* currently tuning (first time) */
+		state_failed,      /* tuning failed. */
+		state_unavailable, /* currently unavailable, will be back without further interaction */
+		state_ok,          /* ok */
+		state_last_instance, /* just one reference to this channel is left */
+		state_release      /* channel is being shut down. */
 	};
-};
+	virtual RESULT getState(int &)=0;
 
-class iDVBChannel: public iObject, public iDVBChannel_ENUMS
-{
-public:
-	virtual SWIG_VOID(RESULT) getFrontend(ePtr<iDVBFrontend> &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) getCurrentFrontendParameters(ePtr<iDVBFrontendParameters> &SWIG_OUTPUT)=0;
-	virtual RESULT requestTsidOnid() = 0;
-	virtual int reserveDemux() = 0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBChannel>, iDVBChannelPtr);
-
-class iDVBChannelList: public iObject
-{
-public:
-	virtual SWIG_VOID(RESULT) getChannelByChannelID(const eDVBChannelID &chid, ePtr<iDVBChannel> &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) initChannel(ePtr<iDVBChannel> &SWIG_OUTPUT, const eDVBChannelID &chid=eDVBChannelID())=0;
-	virtual SWIG_VOID(RESULT) removeChannel(const eDVBChannelID &chid)=0;
-	virtual SWIG_VOID(RESULT) flushChannels()=0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBChannelList>, iDVBChannelListPtr);
-
-class iDVBSectionReader: public iObject
-{
-public:
-	virtual RESULT setBufferSize(int size)=0;
-	virtual RESULT connectRead(const sigc::slot<void(const uint8_t*, int)> &read)=0;
-	virtual RESULT start(const eDVBSectionFilterMask &mask)=0;
-	virtual RESULT stop()=0;
-	virtual ~iDVBSectionReader() {}
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBSectionReader>, iDVBSectionReaderPtr);
-
-class iDVBPESReader: public iObject
-{
-public:
-	virtual SWIG_VOID(RESULT) setBufferSize(int size)=0;
-	virtual RESULT connectRead(const sigc::slot<void(const uint8_t*, int)> &read)=0;
-	virtual RESULT start(int pid)=0;
-	virtual RESULT stop()=0;
-	virtual ~iDVBPESReader() {}
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBPESReader>, iDVBPESReaderPtr);
-
-	/* records a given set of pids into a file. not for the faint hearted. */
-class iDVBTSRecorder: public iObject
-{
-public:
-	virtual RESULT setBufferSize(int size) = 0;
-	virtual RESULT start() = 0;
-	virtual RESULT addPID(int pid) = 0;
-	virtual RESULT removePID(int pid) = 0;
-
-	enum timing_pid_type { none = 0, video_pid, audio_pid };
-	virtual RESULT setTimingPID(int pid, timing_pid_type pidtype, int streamtype) = 0;
-
-	virtual RESULT setTargetFD(int fd) = 0;
-	virtual RESULT setBoundary(off_t max) = 0;
-	virtual RESULT enableAccessPoints(bool enable) = 0;
-	virtual RESULT stop() = 0;
-
-	virtual RESULT getCurrentPCR(pts_t &pcr) = 0;
-	virtual RESULT getFirstPTS(pts_t &pts) = 0;
-
-	enum {
-		eventWriteError,
-				/* a write error has occured. data won't get lost if fd is writable after return. */
-		eventReachedBoundary,
-				/* the programmed boundary was reached. eof occurred. */
+	virtual RESULT getCurrentFrontendParameters(ePtr<iDVBFrontendParameters> &)=0;
+	enum
+	{
+		evtPreStart, evtEOF, evtSOF, evtFailed, evtStopped
 	};
-	virtual SWIG_VOID(RESULT) connectEvent(const sigc::slot<void(int)> &event, ePtr<eConnection> &conn)=0;
+	virtual RESULT connectStateChange(const sigc::slot<void(iDVBChannel*)> &stateChange, ePtr<eConnection> &connection)=0;
+	virtual RESULT connectEvent(const sigc::slot<void(iDVBChannel*,int)> &eventChange, ePtr<eConnection> &connection)=0;
+
+		/* demux capabilities */
+	enum
+	{
+		capDecode = 1,
+		/* capCI = 2 */
+	};
+	virtual RESULT setCIRouting(const eDVBCIRouting &routing)=0;
+	virtual RESULT getDemux(ePtr<iDVBDemux> &demux, int cap=0)=0;
+
+		/* use count handling */
+	virtual void AddUse() = 0;
+	virtual void ReleaseUse() = 0;
+#endif
 };
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBTSRecorder>, iDVBTSRecorderPtr);
+SWIG_TEMPLATE_TYPEDEF(eUsePtr<iDVBChannel>, iDVBChannelPtr);
+
+#ifndef SWIG
+	/* signed, so we can express deltas. */
+
+typedef long long pts_t;
+
+class iFilePushScatterGather;
+class iTSMPEGDecoder;
+
+	/* note that a cue sheet describes the logical positions. thus
+	   everything is specified in pts and not file positions */
+
+	/* implemented in dvb.cpp */
+class eCueSheet: public iObject, public sigc::trackable
+{
+	DECLARE_REF(eCueSheet);
+public:
+	eCueSheet();
+
+			/* frontend */
+	void seekTo(int relative, const pts_t &pts);
+
+	void clear();
+	void addSourceSpan(const pts_t &begin, const pts_t &end);
+	void commitSpans();
+
+	void setSkipmode(const pts_t &ratio); /* 90000 is 1:1 */
+	void setDecodingDemux(iDVBDemux *demux, iTSMPEGDecoder *decoder);
+
+			/* frontend and backend */
+	eRdWrLock m_lock;
+
+			/* backend */
+	enum { evtSeek, evtSkipmode, evtSpanChanged };
+	RESULT connectEvent(const sigc::slot<void(int)> &event, ePtr<eConnection> &connection);
+
+	std::list<std::pair<pts_t,pts_t> > m_spans;	/* begin, end */
+	std::list<std::pair<int, pts_t> > m_seek_requests; /* relative, delta */
+	pts_t m_skipmode_ratio;
+	sigc::signal<void(int)> m_event;
+	ePtr<iDVBDemux> m_decoding_demux;
+	ePtr<iTSMPEGDecoder> m_decoder;
+};
+
+class iDVBPVRChannel: public iDVBChannel
+{
+public:
+	enum
+	{
+		state_eof = state_release + 1  /* end-of-file reached. */
+	};
+
+	virtual RESULT playFile(const char *file) = 0;
+	virtual RESULT playSource(ePtr<iTsSource> &source, const char *priv=NULL) = 0;
+	virtual void stop() = 0;
+
+	virtual void setCueSheet(eCueSheet *cuesheet) = 0;
+	virtual void setOfflineDecodeMode(int parityswitchdelay) = 0;
+
+	virtual RESULT getLength(pts_t &pts) = 0;
+
+		/* we explicitely ask for the decoding demux here because a channel
+		   can be shared between multiple decoders.
+		*/
+	virtual RESULT getCurrentPosition(iDVBDemux *decoding_demux, pts_t &pos, int mode) = 0;
+		/* skipping must be done with a cue sheet */
+};
+
+class iDVBSectionReader;
+class iDVBPESReader;
+class iDVBTSRecorder;
+class iTSMPEGDecoder;
+
+class iDVBDemux: public iObject
+{
+public:
+	virtual RESULT createSectionReader(eMainloop *context, ePtr<iDVBSectionReader> &reader)=0;
+	virtual RESULT createPESReader(eMainloop *context, ePtr<iDVBPESReader> &reader)=0;
+	virtual RESULT createTSRecorder(ePtr<iDVBTSRecorder> &recorder, int packetsize = 188, bool streaming=false)=0;
+	virtual RESULT getMPEGDecoder(ePtr<iTSMPEGDecoder> &reader, int index = 0)=0;
+	virtual RESULT getSTC(pts_t &pts, int num=0)=0;
+	virtual RESULT getCADemuxID(uint8_t &id)=0;
+	virtual RESULT getCAAdapterID(uint8_t &id)=0;
+	virtual RESULT flush()=0;
+	virtual int openDVR(int flags)=0;
+	virtual int getSource()=0;
+};
 
 class iTSMPEGDecoder: public iObject
 {
 public:
-	enum { pidTypeVideo = 0, pidTypeAudio, pidTypeTeletext, pidTypeSubtitle, pidTypePcr };
+	enum { pidDisabled = -1 };
+		/** Set Displayed Video PID and type */
+	virtual RESULT setVideoPID(int vpid, int type)=0;
 
-	virtual RESULT setSource(ePtr<iTsSource> &source, const char *streaminfo_file) = 0;
-	
-	virtual RESULT set(int type, int pid) = 0;
+	enum { af_MPEG, af_AC3, af_DTS, af_AAC, af_DTSHD };
+		/** Set Displayed Audio PID and type */
+	virtual RESULT setAudioPID(int apid, int type)=0;
 
-	virtual int getPesPid(int type) = 0;
+	enum { ac_left, ac_stereo, ac_right };
+		/** Set Displayed Audio Channel */
+	virtual RESULT setAudioChannel(int channel)=0;
+	virtual int getAudioChannel()=0;
 
-	virtual RESULT set(int type, const int &entry) = 0;
+	virtual RESULT setPCMDelay(int delay)=0;
+	virtual int getPCMDelay()=0;
+	virtual RESULT setAC3Delay(int delay)=0;
+	virtual int getAC3Delay()=0;
 
-	virtual RESULT setSyncPCR(int pcrpid) = 0;
-	virtual RESULT setTextPID(int textpid) = 0;
-	virtual RESULT setSyncTS(int pcrpid) = 0;
+		/** Set Displayed Videotext PID */
+	virtual RESULT setTextPID(int vpid)=0;
 
-	enum {
-		eventSeek,		/* discont in video stream, i.e. after skip. decoder will pause */
-		eventMisconfiguration, 	/* hardware decoder misconfigured */
-		eventNoVideo,		/* no video for >= 500ms - may indicate no or broken video stream */
-		eventStillPicture,	/* still picture */
-		eventPreStart,		/* before playback of video really starts, arrived when video device opened */
-		eventHBBTVBoot,		/* issued when a HbbTV app requires the browser to be started */
-		eventHBBTVClose,	/* issued when a HbbTV app requires the browser to be stopped */
-		eventHBBTVUrl		/* issued when a HbbTV apps wants to load a new url */
-	};
-	virtual SWIG_VOID(RESULT) connectVideoEvent(const sigc::slot<void(int)> &event, ePtr<eConnection> &SWIG_OUTPUT)=0;
+		/** Set Sync mode to PCR */
+	virtual RESULT setSyncPCR(int pcrpid)=0;
+	enum { sm_Audio, sm_Video };
+		/** Set Sync mode to either audio or video master */
+	virtual RESULT setSyncMaster(int who)=0;
 
-	virtual RESULT connectStateEvent(const sigc::slot<void(int)> &event, ePtr<eConnection> &connection) = 0;
+		/** Apply settings but don't change state */
+	virtual RESULT set()=0;
+		/* all those apply settings, then transition to the given state */
 
-	virtual RESULT start(int pid, int pidtype, int pidtable = 0) = 0;
-	virtual RESULT stop() = 0;
-	virtual RESULT flush() = 0;
+		/** play */
+	virtual RESULT play()=0;
+		/** Freeze frame. */
+	virtual RESULT pause()=0;
+
+		/** fast forward by skipping frames. 0 is disabled, 2 is twice-the-speed, ... */
+	virtual RESULT setFastForward(int skip=0)=0;
+
+		/** Slow Motion by repeating pictures */
+	virtual RESULT setSlowMotion(int repeat)=0;
+
+		/** Display any complete data as fast as possible */
+	virtual RESULT setTrickmode()=0;
+
+	virtual RESULT prepareFCC(int fe_id, int vpid, int vtype, int pcrpid)=0;
+
+	virtual RESULT fccDecoderStart()=0;
+
+	virtual RESULT fccDecoderStop()=0;
+
+	virtual RESULT fccUpdatePids(int fe_id, int vpid, int vtype, int pcrpid)=0;
+
+	virtual RESULT getPTS(int what, pts_t &pts) = 0;
+
 	virtual RESULT showSinglePic(const char *filename) = 0;
-	virtual RESULT setFastForward(int skip=0) = 0;	
-	virtual RESULT setSlowMotion(int repeat) = 0;
-	virtual RESULT setZoom(int zoom) = 0;
-	virtual RESULT setFreezeMode(int hold) = 0;
-	virtual SWIG_VOID(RESULT) getPTS(pts_t &SWIG_OUTPUT) = 0;
-	virtual RESULT lockNewPTSvalues() = 0;
-	virtual RESULT unlockNewPTSvalues() = 0;
-
-	virtual RESULT pause() = 0;
-	virtual RESULT unpause() = 0;
-	virtual RESULT setFastForward_internal(int skip=0) = 0;
-
-	virtual RESULT getVideoInfo(int &width, int &height, int &aspect, int &fps) = 0;
-	virtual RESULT getVideoProgressive(int &progressive) = 0;
-	virtual RESULT getVideoFrameRate(int &framerate) = 0;
-
-	virtual int getAspect(void) = 0;
-	virtual int getVideoWidth(void) = 0;
-	virtual int getVideoHeight(void) = 0;
-	virtual int getVideoProgressiveFrameCount(void) = 0;
-	virtual int getVideoProgressiveCount(void) = 0;
-	virtual int getVideoFrameRate(void) = 0;
 
 	virtual RESULT setRadioPic(const std::string &filename) = 0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iTSMPEGDecoder>, iTSMPEGDecoderPtr);
 
-class iStreamData;
-SWIG_TEMPLATE_DECLARE(ePtr<iStreamData>, iStreamDataPtr);
-
-class iStreamBufferInfo: public iObject
-{
-public:
-	virtual int getSize()=0;
-	virtual int getAvailable()=0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iStreamBufferInfo>, iStreamBufferInfoPtr);
-
-class iStreamData: public iObject
-{
-public:
-	enum StreamDataType
+	struct videoEvent
 	{
-		TypePES,
-		TypeTS,
-		TypeAudioMp3,
-		TypeAudioMp2,
-		TypeAudioMpega,
-		TypeAudioAc3,
-		TypeAudioDts,
-		TypeAudioAac,
-		TypeAudioLpcm,
-		TypeAudioWav,
-		TypeVideoH264,
-		TypeVideoH265,
-		TypeVideoH265_DRM,
-		TypeVideoMpeg2,
-		TypeVideoMpeg4,
-		TypeVideoVc1,
-		TypeVideoVp8,
-		TypeVideoVp9,
-		TypeAvMpeg,
-		TypeAvMpeg4,
-		TypeAvMkv,
-		TypeAvWebm,
-		TypeAvAvi,
-		TypeAvFLV,
+		enum { eventUnknown = 0,
+			eventSizeChanged = VIDEO_EVENT_SIZE_CHANGED,
+			eventFrameRateChanged = VIDEO_EVENT_FRAME_RATE_CHANGED,
+			eventProgressiveChanged = 16,
+			eventGammaChanged = 17
+		} type;
+		unsigned char aspect;
+		unsigned short height;
+		unsigned short width;
+		bool progressive;
+		unsigned short framerate;
+		unsigned short gamma;
 	};
 
-	virtual SWIG_VOID(RESULT) getStreamDataBuffer(ePtr<iStreamBufferInfo> &SWIG_OUTPUT) = 0;
-	virtual RESULT read(off_t offset, void *buf, size_t count) = 0;
-	virtual off_t length() = 0;
-	virtual off_t offset() = 0;
-	virtual RESULT getEncryptionInfo(ssize_t &, ssize_t &, ssize_t &) = 0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iStreamData>, iStreamDataPtr);
+	virtual RESULT connectVideoEvent(const sigc::slot<void(struct videoEvent)> &event, ePtr<eConnection> &connection) = 0;
 
-class iServiceHandler: public iObject
-{
-public:
-	virtual SWIG_VOID(RESULT) play(const eServiceReference &service, ePtr<iPlayableService> &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) record(const eServiceReference &service, ePtr<iRecordableService> &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) list(const eServiceReference &service, ePtr<iListableService> &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) info(const eServiceReference &service, ePtr<iStaticServiceInformation> &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) offlineOperations(const eServiceReference &service, ePtr<iServiceOfflineOperations> &SWIG_OUTPUT)=0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iServiceHandler>, iServiceHandlerPtr);
-
-class iDVBServiceList;
-SWIG_TEMPLATE_DECLARE(ePtr<iDVBServiceList>, iDVBServiceListPtr);
-
-class iListable: public iObject
-{
-public:
-	virtual RESULT getContent(std::list<eServiceReference> &list, bool sorted=false)=0;
+	virtual int getVideoWidth() = 0;
+	virtual int getVideoHeight() = 0;
+	virtual int getVideoProgressive() = 0;
+	virtual int getVideoFrameRate() = 0;
+	virtual int getVideoAspect() = 0;
+	virtual int getVideoGamma() = 0;
 };
 
-class iDVBServiceList: public iListable
-{
-public:
-	virtual ~iDVBServiceList() {}
-	virtual SWIG_VOID(RESULT) startEdit(ePtr<eDVBServiceList> &SWIG_OUTPUT)=0;
-	virtual SWIG_VOID(RESULT) flushChanges()=0;
-	virtual SWIG_VOID(RESULT) addService(const eServiceReference &reference, eDVBService *service)=0;
-	virtual SWIG_VOID(RESULT) removeService(const eServiceReference &reference, bool renameBouquet=true)=0;
-	virtual SWIG_VOID(RESULT) updateService(const eServiceReference &reference, eDVBService *service)=0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBServiceList>, iDVBServiceListPtr);
-
-#define declareI(x) \
-public: \
-	virtual SWIG_VOID(RESULT) get##x(ePtr<iDVB##x> &SWIG_OUTPUT)=0;
-#define declareE(x) \
-public: \
-	virtual ePtr<iDVB##x> get##x()=0;
-
-class iDVBManager: public iObject
-{
-	declareI(ResourceManager);
-	declareI(ChannelList);
-	declareI(FrontendList);
-	declareI(Demux);
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBManager>, iDVBManagerPtr);
-
-class iDVBResourceManager: public iObject
-{
-public:
-	enum {
-		errorNoFrontend = -1,
-		errorNoFrontend_available = -2,
-		errorNoChannelList = -3,
-	};
-	virtual SWIG_VOID(RESULT) allocateRawChannel(const eDVBChannelID &chid, eUsePtr<iDVBChannel> &SWIG_OUTPUT, int simulate=0)=0;
-	virtual RESULT setFrontendSlotInformations(std::vector<eDVBFrontendParametersSatellite> &, std::vector<eDVBFrontendParametersTerrestrial> &, std::vector<eDVBFrontendParametersCable> &, std::vector<eDVBFrontendParametersATSC> &, int sort=0)=0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBResourceManager>, iDVBResourceManagerPtr);
-
-class iDVBSatelliteEquipmentControl;
-SWIG_TEMPLATE_DECLARE(ePtr<iDVBSatelliteEquipmentControl>, iDVBSatelliteEquipmentControlPtr);
-
-class iDVBSatelliteEquipmentControl: public iObject
-{
-public:
-	/* DEPRECATED: use setCable */
-	virtual RESULT prepare(iDVBFrontend &frontend, const eDVBFrontendParametersSatellite &sat, int &frequency, int frontend_id, unsigned int timeout)=0;
-	virtual RESULT prepareSTeletext(iDVBFrontend &frontend, const eDVBFrontendParametersSatellite &sat, int &frequency, int frontend_id, unsigned int timeout)=0;
-	
-	virtual RESULT prepareFrontend(iDVBFrontend &frontend, const eDVBFrontendParametersSatellite &sat, int frontend_id)=0;
-
-	virtual int canTune(const eDVBFrontendParametersSatellite &feparm, iDVBFrontend *fe, int frontend_id, int *highest_score_lnb=0)=0;
-	virtual void setRotorMoving(int slot_id, bool)=0;
-};
-SWIG_TEMPLATE_TYPEDEF(ePtr<iDVBSatelliteEquipmentControl>, iDVBSatelliteEquipmentControlPtr);
-
-#endif
-
+#endif //SWIG
 #endif
