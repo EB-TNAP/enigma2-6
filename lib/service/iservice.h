@@ -464,6 +464,7 @@ public:
 		frontendStatus,
 		snrValue,
 		frequency,
+			modcodValue, // Added for DVB-S2 MODCOD support
 	};
 };
 
