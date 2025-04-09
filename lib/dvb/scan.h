@@ -6,6 +6,7 @@
 #include <dvbsi++/bouquet_association_section.h>
 #include <dvbsi++/program_association_section.h>
 #include <dvbsi++/program_map_section.h>
+#include <dvbsi++/descriptor.h>
 
 #include <lib/dvb/idemux.h>
 #include <lib/dvb/esection.h>
@@ -93,6 +94,11 @@ class eDVBScan: public sigc::trackable, public iObject
 	sigc::signal<void(int)> m_event;
 	RESULT processSDT(eDVBNamespace dvbnamespace, const ServiceDescriptionSection &sdt);
 	RESULT processVCT(eDVBNamespace dvbnamespace, const VirtualChannelTableSection &vct, int onid);
+	
+	// Helper functions for PMT processing
+	void processPMT(const std::vector<ProgramMapSection*> &pmtSections, bool &scrambled, bool &have_audio, bool &have_video);
+	void processPMTStreams(const ProgramMapSection &pmt, bool &scrambled, bool &have_audio, bool &have_video);
+	void processDescriptors(const DescriptorList *descriptors, bool forced_video, bool forced_audio, int &isaudio, int &isvideo, int &is_scrambled);
 
 	int m_flags;
 	int m_networkid;

@@ -52,6 +52,16 @@ eDVBScan::eDVBScan(iDVBChannel *channel, bool usePAT, bool debug)
 
 eDVBScan::~eDVBScan()
 {
+	// Clean up all table resources to prevent memory leaks
+	m_SDT = 0;
+	m_PAT = 0;
+	m_BAT = 0;
+	m_NIT = 0;
+	m_PMT = 0;
+	m_VCT = 0;
+	
+	// Clean up connections
+	m_stateChanged_connection.disconnect();
 }
 
 int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTransportStreamID tsid)
@@ -473,124 +483,201 @@ void eDVBScan::VCTready(int err)
 	channelDone();
 }
 
+/**
+ * Helper function to determine service type and scrambling from PMT
+ * 
+ * Processes all PMT sections to detect audio/video streams and scrambling status
+ * 
+ * @param pmtSections Vector of PMT sections
+ * @param scrambled [out] Set to true if service is scrambled
+ * @param have_audio [out] Set to true if service has audio
+ * @param have_video [out] Set to true if service has video
+ */
+void eDVBScan::processPMT(const std::vector<ProgramMapSection*> &pmtSections, bool &scrambled, bool &have_audio, bool &have_video)
+{
+	scrambled = false;
+	have_audio = false;
+	have_video = false;
+	unsigned short pcrpid = 0xFFFF;
+	
+	// Process each PMT section
+	for (std::vector<ProgramMapSection*>::const_iterator i = pmtSections.begin(); i != pmtSections.end(); ++i)
+	{
+		const ProgramMapSection &pmt = **i;
+		
+		// Store PCR PID from first section
+		if (pcrpid == 0xFFFF)
+			pcrpid = pmt.getPcrPid();
+		else
+			SCAN_eDebug("[scan.cpp]   already have a pcrpid %04x %04x", pcrpid, pmt.getPcrPid());
+		
+		// Check for CA descriptor in program info (indicates scrambled program)
+		for (DescriptorConstIterator desc = pmt.getDescriptors()->begin(); desc != pmt.getDescriptors()->end(); ++desc)
+		{
+			if ((*desc)->getTag() == CA_DESCRIPTOR)
+				scrambled = true;
+		}
+		
+		// Process elementary streams for audio/video detection
+		processPMTStreams(pmt, scrambled, have_audio, have_video);
+	}
+}
+
+/**
+ * Helper function to process elementary streams in PMT
+ * 
+ * @param pmt The PMT section to process
+ * @param scrambled [in/out] Set to true if a scrambled stream is found
+ * @param have_audio [in/out] Set to true if an audio stream is found
+ * @param have_video [in/out] Set to true if a video stream is found
+ */
+void eDVBScan::processPMTStreams(const ProgramMapSection &pmt, bool &scrambled, bool &have_audio, bool &have_video)
+{
+	// Process each elementary stream
+	for (ElementaryStreamInfoConstIterator es = pmt.getEsInfo()->begin(); es != pmt.getEsInfo()->end(); ++es)
+	{
+		int isaudio = 0, isvideo = 0, is_scrambled = 0, forced_audio = 0, forced_video = 0;
+		
+		// Detect stream type by looking at stream_type field
+		switch ((*es)->getType())
+		{
+		// Video stream types
+		case 0x1b: // AVC Video Stream (MPEG4 H264)
+		case 0x24: // H265 HEVC
+		case 0x10: // MPEG 4 Part 2
+		case 0x01: // MPEG 1 video
+		case 0x02: // MPEG 2 video
+			isvideo = 1;
+			forced_video = 1;
+			[[fallthrough]];
+			
+		// Audio stream types
+		case 0x03: // MPEG 1 audio
+		case 0x04: // MPEG 2 audio
+		case 0x0f: // MPEG 2 AAC
+		case 0x11: // MPEG 4 AAC
+			if (!isvideo)
+			{
+				forced_audio = 1;
+				isaudio = 1;
+			}
+			[[fallthrough]];
+			
+		// Private streams that need descriptor inspection
+		case 0x06: // PES Private
+		case 0x81: // user private
+		case 0xEA: // TS_PSI_ST_SMPTE_VC1
+			// Check descriptors for more information about the stream
+			processDescriptors((*es)->getDescriptors(), forced_video, forced_audio, isaudio, isvideo, is_scrambled);
+			break;
+			
+		default:
+			// Unhandled stream type
+			break;
+		}
+		
+		// Update service type flags
+		if (isvideo)
+			have_video = true;
+		else if (isaudio)
+			have_audio = true;
+		
+		// Update scrambled flag
+		if (is_scrambled)
+			scrambled = true;
+	}
+}
+
+/**
+ * Helper function to process descriptors in PMT
+ * 
+ * @param descriptors List of descriptors to process
+ * @param forced_video Set if already determined to be video from stream_type
+ * @param forced_audio Set if already determined to be audio from stream_type
+ * @param isaudio [in/out] Flag to indicate audio stream
+ * @param isvideo [in/out] Flag to indicate video stream
+ * @param is_scrambled [in/out] Flag to indicate scrambled stream
+ */
+void eDVBScan::processDescriptors(const DescriptorList *descriptors, bool forced_video, bool forced_audio, int &isaudio, int &isvideo, int &is_scrambled)
+{
+	// Process each descriptor
+	for (DescriptorConstIterator desc = descriptors->begin(); desc != descriptors->end(); ++desc)
+	{
+		uint8_t tag = (*desc)->getTag();
+		
+		// Only determine audio/video type from descriptors if not already forced by stream_type
+		if (!forced_video && !forced_audio)
+		{
+			switch (tag)
+			{
+			// Audio descriptors
+			case 0x1C: // TS_PSI_DT_MPEG4_Audio
+			case 0x2B: // TS_PSI_DT_MPEG2_AAC
+			case AAC_DESCRIPTOR:
+			case AC3_DESCRIPTOR:
+			case DTS_DESCRIPTOR:
+			case AUDIO_STREAM_DESCRIPTOR:
+				isaudio = 1;
+				break;
+				
+			// Video descriptors
+			case 0x28: // TS_PSI_DT_AVC
+			case 0x1B: // TS_PSI_DT_MPEG4_Video
+			case VIDEO_STREAM_DESCRIPTOR:
+				isvideo = 1;
+				break;
+				
+			// Registration descriptors - can indicate format
+			case REGISTRATION_DESCRIPTOR:
+			{
+				RegistrationDescriptor *d = (RegistrationDescriptor*)(*desc);
+				switch (d->getFormatIdentifier())
+				{
+				case 0x44545331 ... 0x44545333: // DTS1/DTS2/DTS3
+				case 0x41432d33: // == 'AC-3'
+				case 0x42535344: // == 'BSSD' (LPCM)
+					isaudio = 1;
+					break;
+				case 0x56432d31: // == 'VC-1'
+					isvideo = 1;
+					break;
+				default:
+					break;
+				}
+				break;
+			}
+			
+			default:
+				// Unhandled descriptor
+				break;
+			}
+		}
+		
+		// Check for CA descriptor (indicates scrambled content)
+		if (tag == CA_DESCRIPTOR)
+			is_scrambled = 1;
+	}
+}
+
 void eDVBScan::PMTready(int err)
 {
-//	SCAN_eDebug("[scan.cpp-#433] got pmt %d", err);
 	if (!err)
 	{
 		bool scrambled = false;
 		bool have_audio = false;
 		bool have_video = false;
-		unsigned short pcrpid = 0xFFFF;
-		std::vector<ProgramMapSection*>::const_iterator i;
-
-		for (i = m_PMT->getSections().begin(); i != m_PMT->getSections().end(); ++i)
-		{
-			const ProgramMapSection &pmt = **i;
-			if (pcrpid == 0xFFFF)
-				pcrpid = pmt.getPcrPid();
-			else
-				SCAN_eDebug("[scan.cpp-#448]   already have a pcrpid %04x %04x", pcrpid, pmt.getPcrPid());
-			ElementaryStreamInfoConstIterator es;
-			for (es = pmt.getEsInfo()->begin(); es != pmt.getEsInfo()->end(); ++es)
-			{
-				int isaudio = 0, isvideo = 0, is_scrambled = 0, forced_audio = 0, forced_video = 0;
-				switch ((*es)->getType())
-				{
-				case 0x1b: // AVC Video Stream (MPEG4 H264)
-				case 0x24: // H265 HEVC
-				case 0x10: // MPEG 4 Part 2
-				case 0x01: // MPEG 1 video
-				case 0x02: // MPEG 2 video
-					isvideo = 1;
-					forced_video = 1;
-					[[fallthrough]];
-				case 0x03: // MPEG 1 audio
-				case 0x04: // MPEG 2 audio
-				case 0x0f: // MPEG 2 AAC
-				case 0x11: // MPEG 4 AAC
-					if (!isvideo)
-					{
-						forced_audio = 1;
-						isaudio = 1;
-					}
-					[[fallthrough]];
-				case 0x06: // PES Private
-				case 0x81: // user private
-				case 0xEA: // TS_PSI_ST_SMPTE_VC1
-					for (DescriptorConstIterator desc = (*es)->getDescriptors()->begin();
-							desc != (*es)->getDescriptors()->end(); ++desc)
-					{
-						uint8_t tag = (*desc)->getTag();
-						/* PES private can contain AC-3, DTS or lots of other stuff.
-						   check descriptors to get the exakt type. */
-						if (!forced_video && !forced_audio)
-						{
-							switch (tag)
-							{
-							case 0x1C: // TS_PSI_DT_MPEG4_Audio
-							case 0x2B: // TS_PSI_DT_MPEG2_AAC
-							case AAC_DESCRIPTOR:
-							case AC3_DESCRIPTOR:
-							case DTS_DESCRIPTOR:
-							case AUDIO_STREAM_DESCRIPTOR:
-								isaudio = 1;
-								break;
-							case 0x28: // TS_PSI_DT_AVC
-							case 0x1B: // TS_PSI_DT_MPEG4_Video
-							case VIDEO_STREAM_DESCRIPTOR:
-								isvideo = 1;
-								break;
-							case REGISTRATION_DESCRIPTOR: /* some services don't have a separate AC3 descriptor */
-							{
-								RegistrationDescriptor *d = (RegistrationDescriptor*)(*desc);
-								switch (d->getFormatIdentifier())
-								{
-								case 0x44545331 ... 0x44545333: // DTS1/DTS2/DTS3
-								case 0x41432d33: // == 'AC-3'
-								case 0x42535344: // == 'BSSD' (LPCM)
-									isaudio = 1;
-									break;
-								case 0x56432d31: // == 'VC-1'
-									isvideo = 1;
-									break;
-								default:
-									break;
-								}
-							}
-							default:
-								break;
-							}
-						}
-						if (tag == CA_DESCRIPTOR)
-							is_scrambled = 1;
-					}
-				default:
-					break;
-				}
-				if (isvideo)
-					have_video = true;
-				else if (isaudio)
-					have_audio = true;
-				else
-					continue;
-				if (is_scrambled)
-					scrambled = true;
-			}
-			for (DescriptorConstIterator desc = pmt.getDescriptors()->begin();
-				desc != pmt.getDescriptors()->end(); ++desc)
-			{
-				if ((*desc)->getTag() == CA_DESCRIPTOR)
-					scrambled = true;
-			}
-		}
+		
+		// Process PMT to determine service type and scrambling
+		processPMT(m_PMT->getSections(), scrambled, have_audio, have_video);
+		
+		// Update service information
 		m_pmt_in_progress->second.scrambled = scrambled;
-		if ( have_video )
-			m_pmt_in_progress->second.serviceType = 1;
-		else if ( have_audio )
-			m_pmt_in_progress->second.serviceType = 2;
+		if (have_video)
+			m_pmt_in_progress->second.serviceType = 1; // TV service
+		else if (have_audio)
+			m_pmt_in_progress->second.serviceType = 2; // Radio service
 		else
-			m_pmt_in_progress->second.serviceType = 100;
+			m_pmt_in_progress->second.serviceType = 100; // Data service
 	}
 	if (err == -1) // timeout or removed by sdt
 		m_pmts_to_read.erase(m_pmt_in_progress++);
@@ -622,8 +709,10 @@ void eDVBScan::addKnownGoodChannel(const eDVBChannelID &chid, iDVBFrontendParame
 
 void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 {
-		/* check if we don't already have that channel ... */
+	if (!feparm)
+		return;
 
+	/* Validate and log the channel we're trying to add */
 	int type;
 	feparm->getSystem(type);
 
@@ -633,7 +722,7 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 	{
 		eDVBFrontendParametersSatellite parm;
 		feparm->getDVBS(parm);
-		SCAN_eDebug("[scan.cpp-#591] try to add sat %d %d %d %d %d %d",
+		SCAN_eDebug("[scan.cpp] try to add sat %d %d %d %d %d %d",
 			parm.orbital_position, parm.frequency, parm.symbol_rate, parm.polarisation, parm.fec, parm.modulation);
 		break;
 	}
@@ -641,7 +730,7 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 	{
 		eDVBFrontendParametersCable parm;
 		feparm->getDVBC(parm);
-		SCAN_eDebug("[scan.cpp-#599] try to add cable %d %d %d %d",
+		SCAN_eDebug("[scan.cpp] try to add cable %d %d %d %d",
 			parm.frequency, parm.symbol_rate, parm.modulation, parm.fec_inner);
 		break;
 	}
@@ -649,7 +738,7 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 	{
 		eDVBFrontendParametersTerrestrial parm;
 		feparm->getDVBT(parm);
-		SCAN_eDebug("[scan.cpp-#607] try to add terres %d %d %d %d %d %d %d %d",
+		SCAN_eDebug("[scan.cpp] try to add terres %d %d %d %d %d %d %d %d",
 			parm.frequency, parm.modulation, parm.transmission_mode, parm.hierarchy,
 			parm.guard_interval, parm.code_rate_LP, parm.code_rate_HP, parm.bandwidth);
 		break;
@@ -658,70 +747,212 @@ void eDVBScan::addChannelToScan(iDVBFrontendParameters *feparm)
 	{
 		eDVBFrontendParametersATSC parm;
 		feparm->getATSC(parm);
-		SCAN_eDebug("[scan.cpp-#616] try to add atsc %d %d %d %d",
+		SCAN_eDebug("[scan.cpp] try to add atsc %d %d %d %d",
 			parm.frequency, parm.modulation, parm.inversion, parm.system);
 		break;
 	}
+	default:
+		SCAN_eDebug("[scan.cpp] try to add unknown frontend type");
+		return; // Don't add invalid types
 	}
 
-	int found_count=0;
-		/* ... in the list of channels to scan */
+	/* Create efficient lookup set of channels we need to check */
+	static std::set<int> checked_channels;
+	checked_channels.clear();
+	
+	/* Check if we're already scanning this channel */
+	if (m_ch_current && sameChannel(m_ch_current, feparm))
+	{
+		SCAN_eDebug("[scan.cpp] channel is current - skipping");
+		return;
+	}
+
+	/* First look in the to-scan list for duplicates */
+	int found_count = 0;
 	for (std::list<ePtr<iDVBFrontendParameters> >::iterator i(m_ch_toScan.begin()); i != m_ch_toScan.end();)
 	{
 		if (sameChannel(*i, feparm))
 		{
 			if (!found_count)
 			{
-				*i = feparm;  // update
-				SCAN_eDebug("[eDVBScan]   update");
+				*i = feparm;  // update parameters if this is first match
+				SCAN_eDebug("[scan.cpp] updated channel in scan list");
+				return;
 			}
 			else
 			{
-				SCAN_eDebug("[eDVBScan]   remove dupe");
+				SCAN_eDebug("[scan.cpp] removing duplicate from scan list");
 				m_ch_toScan.erase(i++);
-				continue;
+				continue; 
 			}
 			++found_count;
 		}
 		++i;
 	}
 
-	if (found_count > 0)
-	{
-		SCAN_eDebug("[scan.cpp-#636]   already in todo list");
-		return;
-	}
-
-		/* ... in the list of successfully scanned channels */
+	/* Check if we've already scanned this channel successfully */
 	for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator i(m_ch_scanned.begin()); i != m_ch_scanned.end(); ++i)
+	{
 		if (sameChannel(*i, feparm))
 		{
-			SCAN_eDebug("[eDVBScan]   successfully scanned");
+			SCAN_eDebug("[scan.cpp] channel already successfully scanned");
 			return;
 		}
-
-		/* ... in the list of unavailable channels */
-	for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator i(m_ch_unavailable.begin()); i != m_ch_unavailable.end(); ++i)
-		if (sameChannel(*i, feparm, true))
-		{
-			SCAN_eDebug("[eDVBScan]   scanned but not available");
-			return;
-		}
-
-		/* ... on the current channel */
-	if (sameChannel(m_ch_current, feparm))
-	{
-		SCAN_eDebug("[scan.cpp-#642]   is current");
-		return;
 	}
 
-	SCAN_eDebug("[scan.cpp-#646]   really add");
-		/* otherwise, add it to the todo list. */
-	m_ch_toScan.push_front(feparm); // better.. then the rotor not turning wild from east to west :)
+	/* Check if this channel was previously unavailable */
+	for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator i(m_ch_unavailable.begin()); i != m_ch_unavailable.end(); ++i)
+	{
+		if (sameChannel(*i, feparm, true)) // Use exact match for unavailable channels
+		{
+			SCAN_eDebug("[scan.cpp] channel previously marked unavailable");
+			return;
+		}
+	}
+
+	/* Channel is new, add it to the scan list */
+	SCAN_eDebug("[scan.cpp] adding new channel to scan list");
+	m_ch_toScan.push_front(feparm); // Add at front so rotor doesn't move unnecessarily
 }
 
 int eDVBScan::sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *ch2, bool exact) const
 {
+	if (!ch1 || !ch2)
+		return 0;
+
+	int type1, type2;
+	
+	if (ch1->getSystem(type1) || ch2->getSystem(type2))
+		return 0;
+	
+	if (type1 != type2)
+		return 0;
+		
+	switch (type1)
+	{
+		case iDVBFrontend::feSatellite:
+		{
+			eDVBFrontendParametersSatellite parm1, parm2;
+			if (ch1->getDVBS(parm1) || ch2->getDVBS(parm2))
+				return 0;
+				
+			// Check if orbital position is the same
+			if (parm1.orbital_position != parm2.orbital_position)
+				return 0;
+				
+			// Frequency check with tolerance
+			if (absdiff(parm1.frequency, parm2.frequency) > 2000) // 2MHz tolerance
+				return 0;
+				
+			// If checking exact parameters
+			if (exact)
+			{
+				if (parm1.polarisation != parm2.polarisation ||
+					parm1.symbol_rate != parm2.symbol_rate ||
+					parm1.fec != parm2.fec ||
+					parm1.modulation != parm2.modulation ||
+					parm1.pilot != parm2.pilot ||
+					parm1.system != parm2.system)
+					return 0;
+					
+				// Check multistream parameters if applicable
+				if (parm1.system == eDVBFrontendParametersSatellite::System_DVB_S2)
+				{
+					if (parm1.is_id != parm2.is_id ||
+						parm1.pls_mode != parm2.pls_mode ||
+						parm1.pls_code != parm2.pls_code)
+						return 0;
+				}
+			}
+			else
+			{
+				// Less strict check for non-exact comparison
+				// Polarisation is important even for non-exact
+				if (parm1.polarisation != parm2.polarisation)
+					return 0;
+			}
+			return 1;
+			break;
+		}
+		case iDVBFrontend::feCable:
+		{
+			eDVBFrontendParametersCable parm1, parm2;
+			if (ch1->getDVBC(parm1) || ch2->getDVBC(parm2))
+				return 0;
+				
+			// Frequency check with tolerance
+			if (absdiff(parm1.frequency, parm2.frequency) > 2000) // 2MHz tolerance
+				return 0;
+				
+			// If checking exact parameters
+			if (exact)
+			{
+				if (parm1.symbol_rate != parm2.symbol_rate ||
+					parm1.modulation != parm2.modulation ||
+					parm1.fec_inner != parm2.fec_inner ||
+					parm1.inversion != parm2.inversion ||
+					parm1.system != parm2.system)
+					return 0;
+			}
+			return 1;
+			break;
+		}
+		case iDVBFrontend::feTerrestrial:
+		{
+			eDVBFrontendParametersTerrestrial parm1, parm2;
+			if (ch1->getDVBT(parm1) || ch2->getDVBT(parm2))
+				return 0;
+				
+			// Frequency check with tolerance
+			if (absdiff(parm1.frequency, parm2.frequency) > 2000) // 2MHz tolerance
+				return 0;
+				
+			// If checking exact parameters
+			if (exact)
+			{
+				if (parm1.bandwidth != parm2.bandwidth ||
+					parm1.modulation != parm2.modulation ||
+					parm1.transmission_mode != parm2.transmission_mode ||
+					parm1.guard_interval != parm2.guard_interval ||
+					parm1.hierarchy != parm2.hierarchy ||
+					parm1.code_rate_LP != parm2.code_rate_LP ||
+					parm1.code_rate_HP != parm2.code_rate_HP ||
+					parm1.system != parm2.system)
+					return 0;
+					
+				// For DVB-T2 check PLP ID
+				if (parm1.system == eDVBFrontendParametersTerrestrial::System_DVB_T2 && 
+					parm1.plp_id != parm2.plp_id)
+					return 0;
+			}
+			return 1;
+			break;
+		}
+		case iDVBFrontend::feATSC:
+		{
+			eDVBFrontendParametersATSC parm1, parm2;
+			if (ch1->getATSC(parm1) || ch2->getATSC(parm2))
+				return 0;
+				
+			// Frequency check with tolerance
+			if (absdiff(parm1.frequency, parm2.frequency) > 2000) // 2MHz tolerance
+				return 0;
+				
+			// If checking exact parameters
+			if (exact)
+			{
+				if (parm1.modulation != parm2.modulation ||
+					parm1.inversion != parm2.inversion ||
+					parm1.system != parm2.system)
+					return 0;
+			}
+			return 1;
+			break;
+		}
+		default:
+			break;
+	}
+	
 	return 0;
 }
 
@@ -1203,6 +1434,8 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 	std::list<ePtr<iDVBFrontendParameters> > *transponderlist = &m_ch_toScan;
 	m_flags = flags;
 	m_networkid = networkid;
+	
+	// Clear all stored data to start fresh
 	m_ch_toScan.clear();
 	m_ch_scanned.clear();
 	m_ch_unavailable.clear();
@@ -1213,6 +1446,7 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 	m_new_servicerefs.clear();
 	m_last_service = m_new_services.end();
 
+	// Determine the scan mode
 	if (m_flags & scanBlindSearch)
 	{
 		/*
@@ -1230,9 +1464,7 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 		 * The frequency defines the starting frequency within the desired band.
 		 * The symbolrate defines the frequency search range, in MHz (frequency / 1000).
 		 * The polarity defines on which polarity the search should run.
-		 * All remaining transponder parameters will be ignored.
-		 * So for each orbital position, 4 blindscan iteration runs will be done, one for each polarity/band 'quadrant'.
-		 *
+		
 		 * For DVB-C, only one initial transponder has to be provided.
 		 * The frequency defines the start of the blindscan.
 		 * The symbolrate defines the frequency search range, in MHz (frequency / 1000000).
@@ -1241,32 +1473,48 @@ void eDVBScan::start(const eSmartPtrList<iDVBFrontendParameters> &known_transpon
 		 * The frequency defines the start of the blindscan.
 		 * The bandwidth defines both the search step as well as the search bandwidth.
 		 */
-
 		SCAN_eDebug("[eDVBScan] blind scan requested");
 		transponderlist = &m_ch_blindscan;
 	}
 
+	// Reset LCN database if removing services
 	if (m_flags & scanRemoveServices)
 	{
 		eDVBDB::getInstance()->resetLcnDB();
 	}
 
-
-	for (eSmartPtrList<iDVBFrontendParameters>::const_iterator i(known_transponders.begin()); i != known_transponders.end(); ++i)
+	// Process and deduplicate known transponders
+	if (!known_transponders.empty())
 	{
-		bool exist=false;
-		for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator ii(transponderlist->begin()); ii != transponderlist->end(); ++ii)
+		SCAN_eDebug("[eDVBScan] processing %zu known transponders", known_transponders.size());
+		
+		// Use a set for faster duplicate checking
+		std::set<iDVBFrontendParameters*> unique_transponders;
+		
+		for (eSmartPtrList<iDVBFrontendParameters>::const_iterator i(known_transponders.begin()); i != known_transponders.end(); ++i)
 		{
-			if (sameChannel(*i, *ii, true))
+			// Check if this transponder already exists in our scan list
+			bool exists = false;
+			for (std::list<ePtr<iDVBFrontendParameters> >::const_iterator ii(transponderlist->begin()); 
+				 ii != transponderlist->end() && !exists; ++ii)
 			{
-				exist=true;
-				break;
+				if (sameChannel(*i, *ii, true))
+				{
+					exists = true;
+				}
+			}
+			
+			// Add unique transponders to our scan list
+			if (!exists)
+			{
+				transponderlist->push_back(*i);
 			}
 		}
-		if (!exist)
-			transponderlist->push_back(*i);
+		
+		SCAN_eDebug("[eDVBScan] added %zu unique transponders to scan list", transponderlist->size());
 	}
 
+	// Start scanning the first channel
 	nextChannel();
 }
 
