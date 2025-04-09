@@ -16,7 +16,6 @@
 #include <dvbsi++/registration_descriptor.h>
 #include <dvbsi++/extension_descriptor.h>
 #include <dvbsi++/frequency_list_descriptor.h>
-#include <dvbsi++/descriptor_container.h>
 #include <lib/base/nconfig.h> // access to python config
 #include <lib/dvb/specs.h>
 #include <lib/dvb/esection.h>
@@ -603,7 +602,7 @@ void eDVBScan::processPMTStreams(const ProgramMapSection &pmt, bool &scrambled, 
  * @param isvideo [in/out] Flag to indicate video stream
  * @param is_scrambled [in/out] Flag to indicate scrambled stream
  */
-void eDVBScan::processDescriptors(const DescriptorContainer *descriptors, bool forced_video, bool forced_audio, int &isaudio, int &isvideo, int &is_scrambled)
+void eDVBScan::processDescriptors(const DescriptorList *descriptors, bool forced_video, bool forced_audio, int &isaudio, int &isvideo, int &is_scrambled)
 {
 	// Process each descriptor
 	for (DescriptorConstIterator desc = descriptors->begin(); desc != descriptors->end(); ++desc)
