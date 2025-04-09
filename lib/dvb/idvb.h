@@ -811,5 +811,99 @@ public:
 	virtual int getVideoGamma() = 0;
 };
 
+namespace DVB_S2_MODCOD {
+	enum {
+		DUMMY = 0,
+		QPSK_1_4 = 1,
+		QPSK_1_3 = 2,
+		QPSK_2_5 = 3,
+		QPSK_1_2 = 4,
+		QPSK_3_5 = 5,
+		QPSK_2_3 = 6,
+		QPSK_3_4 = 7,
+		QPSK_4_5 = 8,
+		QPSK_5_6 = 9,
+		QPSK_8_9 = 10,
+		QPSK_9_10 = 11,
+		
+		_8PSK_3_5 = 12,
+		_8PSK_2_3 = 13,
+		_8PSK_3_4 = 14,
+		_8PSK_5_6 = 15,
+		_8PSK_8_9 = 16,
+		_8PSK_9_10 = 17,
+		
+		_16APSK_2_3 = 18,
+		_16APSK_3_4 = 19,
+		_16APSK_4_5 = 20,
+		_16APSK_5_6 = 21,
+		_16APSK_8_9 = 22,
+		_16APSK_9_10 = 23,
+		
+		_32APSK_3_4 = 24,
+		_32APSK_4_5 = 25,
+		_32APSK_5_6 = 26,
+		_32APSK_8_9 = 27,
+		_32APSK_9_10 = 28
+	};
+	
+	// Helper array with required SNR values in dB * 10
+	static const int requiredSNR_x10[] = {
+		0,      // DUMMY
+		-23,    // QPSK 1/4
+		-12,    // QPSK 1/3
+		-30,    // QPSK 2/5
+		8,      // QPSK 1/2
+		42,     // QPSK 3/5
+		48,     // QPSK 2/3
+		67,     // QPSK 3/4
+		79,     // QPSK 4/5
+		94,     // QPSK 5/6
+		110,    // QPSK 8/9
+		113,    // QPSK 9/10
+		
+		73,     // 8PSK 3/5
+		99,     // 8PSK 2/3
+		116,    // 8PSK 3/4
+		134,    // 8PSK 5/6
+		157,    // 8PSK 8/9
+		162,    // 8PSK 9/10
+		
+		134,    // 16APSK 2/3
+		149,    // 16APSK 3/4
+		165,    // 16APSK 4/5
+		184,    // 16APSK 5/6
+		207,    // 16APSK 8/9
+		212,    // 16APSK 9/10
+		
+		193,    // 32APSK 3/4
+		208,    // 32APSK 4/5
+		224,    // 32APSK 5/6
+		247,    // 32APSK 8/9
+		253     // 32APSK 9/10
+	};
+};
+
+// Define iFrontendInformation_ENUMS if it doesn't exist
+class iFrontendInformation_ENUMS
+{
+#ifdef SWIG
+	iFrontendInformation_ENUMS();
+	~iFrontendInformation_ENUMS();
+#endif
+public:
+	enum { 
+		bitErrorRate, 
+		signalPower, 
+		signalQuality, 
+		lockState, 
+		syncState, 
+		frontendNumber, 
+		signalQualitydB,
+		frontendStatus,
+		modcodValue, // New enum for MODCOD
+	};
+};
+
 #endif //SWIG
 #endif
