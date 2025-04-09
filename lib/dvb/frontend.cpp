@@ -19,6 +19,14 @@
 #define I2C_SLAVE_FORCE	0x0706
 #endif
 
+// Define DTV_STAT_MODCOD if not defined in the DVB API
+#ifndef DTV_STAT_MODCOD
+#define DTV_STAT_MODCOD 92
+#endif
+
+// For backward compatibility, alias iDVBFrontend_ENUMS as iFrontendInformation_ENUMS
+namespace iFrontendInformation_ENUMS = iDVBFrontend_ENUMS;
+
 #define eDebugNoSimulate(x...) \
 	do { \
 		if (!m_simulate) \
