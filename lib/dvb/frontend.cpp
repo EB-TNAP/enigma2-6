@@ -24,7 +24,7 @@
 #define DTV_STAT_MODCOD 92
 #endif
 
-// For backward compatibility, alias iDVBFrontend_ENUMS as iFrontendInformation_ENUMS
+// Fix namespace conflict between iDVBFrontend_ENUMS and iFrontendInformation_ENUMS
 namespace iFrontendInformation_ENUMS = iDVBFrontend_ENUMS;
 
 #define eDebugNoSimulate(x...) \
