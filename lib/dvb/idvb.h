@@ -14,6 +14,7 @@
 #include <connection.h>
 #include <lib/base/nconfig.h> // access to python config
 #include <lib/base/estring.h>
+#include <lib/dvb/sec.h> // For eDVBDiseqcCommand, etc.
 
 #define CAID_LIST std::list<uint16_t>
 
@@ -602,24 +603,13 @@ public:
 	virtual int getRequiredSNR() const = 0;
 };
 
-class iFrontendInformation_ENUMS
-{
-public:
-	enum {
-		bitErrorRate,
-		snrValue,
-		signalPower,
-		symbolRate,
-		frontendNumber
-	};
-	enum {
-		lockStateUnknown=0,
-		lockStateLocked=1,
-		lockStateNotLocked=2
-	};
-};
+// Adding MODCOD value to the existing iDVBFrontend_ENUMS
+// Do not redefine iFrontendInformation_ENUMS here - it's already defined in iservice.h
 
-class iFrontendInformation: public iObject, public iFrontendInformation_ENUMS
+#include <lib/service/iservice.h> // Include this to use iFrontendInformation_ENUMS
+
+// Use iFrontendInformation from iservice.h instead of redefining it
+/* class iFrontendInformation: public iObject, public iFrontendInformation_ENUMS
 {
 public:
 	virtual int getFrontendInfo(int w)=0;
@@ -631,7 +621,7 @@ public:
 	virtual SWIG_VOID(RESULT) getFrontendData(struct eDVBFrontendParametersCable &SWIG_OUTPUT)=0;
 	virtual SWIG_VOID(RESULT) getFrontendData(struct eDVBFrontendParametersTerrestrial &SWIG_OUTPUT)=0;
 	virtual SWIG_VOID(RESULT) getFrontendData(struct eDVBFrontendParametersATSC &SWIG_OUTPUT)=0;
-};
+};*/
 
 class iDVBFrontend: public iObject, public iDVBFrontend_ENUMS
 {

@@ -24,8 +24,7 @@
 #define DTV_STAT_MODCOD 92
 #endif
 
-// Fix namespace conflict between iDVBFrontend_ENUMS and iFrontendInformation_ENUMS
-namespace iFrontendInformation_ENUMS = iDVBFrontend_ENUMS;
+// The namespace alias is no longer needed as we're fixing the classes in idvb.h
 
 #define eDebugNoSimulate(x...) \
 	do { \
