@@ -313,23 +313,6 @@ int eDVBService::isPlayable(const eServiceReference &ref, const eServiceReferenc
 	return 0;
 }
 
-// Standalone checkFilter function for filtering based on service type
-int checkFilter(const eServiceReferenceDVB &ref, const int &filter)
-{
-	int tmp = filter;
-	switch (ref.getServiceType())
-	{
-	case 1: // digital television service
-		tmp &= ~(eServiceReference::dTv|eServiceReference::dDVD);
-		break;
-	case 2: // digital radio service
-		tmp &= ~(eServiceReference::dRadio|eServiceReference::dDVD);
-		break;
-	}
-	// Return the filtered value
-	return tmp;
-}
-
 int eDVBService::checkFilter(const eServiceReferenceDVB &ref, const eDVBChannelQuery &query)
 {
 	int res = 0;
@@ -3475,5 +3458,4 @@ RESULT eDVBChannelQuery::compile(ePtr<eDVBChannelQuery> &res, std::string query)
 	return r;
 }
 
-// Commented out to prevent redefinition errors
-// DEFINE_REF(eDVBChannelQuery);
+DEFINE_REF(eDVBChannelQuery);
