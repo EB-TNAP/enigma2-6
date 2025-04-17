@@ -27,11 +27,8 @@
 #define DEFAULT_COMPLETE_TIMEOUT_MS 45000  // Up from 20s
 #define MAX_RETRY_COUNT 15 // Up from 5
 #define SECTION_HEADER_LENGTH 3
-#define DEBUG_DVBREADER 1
-
-
 // Debug macro - change to 1 to enable debug output
-#define DEBUG_DVBREADER 0
+#define DEBUG_DVBREADER 1
 
 #if DEBUG_DVBREADER
 #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "[DVBReader] " fmt, ## args)
@@ -220,16 +217,20 @@ static int parse_header(unsigned char *data, int len, PyObject **header_dict) {
 
 // Helper function to parse a descriptor (used in various tables)
 // Currently unused, but kept for future extensibility
-//#if 0
+// Enhanced descriptor parsing
 static PyObject* parse_descriptor(unsigned char *data, int len) {
 	if (len < 2) {
+		DEBUG_PRINT("Descriptor too short: %d bytes\n", len);
 		Py_RETURN_NONE;
 	}
 	
 	unsigned char descriptor_tag = data[0];
 	unsigned char descriptor_length = data[1];
 	
+	DEBUG_PRINT("Processing descriptor tag 0x%02x, length %d\n", descriptor_tag, descriptor_length);
+	
 	if (len < 2 + descriptor_length) {
+		DEBUG_PRINT("Descriptor buffer too short: have %d, need %d\n", len, 2 + descriptor_length);
 		Py_RETURN_NONE;
 	}
 	
@@ -237,11 +238,29 @@ static PyObject* parse_descriptor(unsigned char *data, int len) {
 	PyDict_SetItemString(descriptor, "descriptor_tag", PyLong_FromLong(descriptor_tag));
 	PyDict_SetItemString(descriptor, "descriptor_length", PyLong_FromLong(descriptor_length));
 	
-	// Potentially add parsing of specific descriptor types here if needed
+	// Process specific descriptor types
+	switch (descriptor_tag) {
+		case 0x48: // Service descriptor
+			DEBUG_PRINT("Found service descriptor\n");
+			break;
+		case 0x41: // Service list descriptor
+			DEBUG_PRINT("Found service list descriptor\n");
+			break;
+		case 0x43: // Satellite delivery system descriptor
+			DEBUG_PRINT("Found satellite delivery descriptor\n");
+			break;
+		case 0x5A: // Terrestrial delivery system descriptor 
+			DEBUG_PRINT("Found terrestrial delivery descriptor\n");
+			break;
+		case 0x62: // Frequency list descriptor
+			DEBUG_PRINT("Found frequency list descriptor\n");
+			break;
+		default:
+			DEBUG_PRINT("Unhandled descriptor type: 0x%02x\n", descriptor_tag);
+	}
 	
 	return descriptor;
 }
-//#endif
 
 // Convert DVB encoded text to UTF-8
 static PyObject* convert_dvb_text(unsigned char *data, int len) {
@@ -294,7 +313,20 @@ static int parse_service_descriptor(unsigned char *data, int len, PyObject *serv
 
 // Parse SDT (Service Description Table)
 static int parse_sdt_content(unsigned char *data, int len, PyObject *content_list) {
+	DEBUG_PRINT("Parsing SDT content, length: %d bytes\n", len);
 	int pos = 11; // Start after the fixed header (SDT header is 11 bytes)
+	int services_found = 0;
+	
+	if (len < 11) {
+		DEBUG_PRINT("SDT too short for header, length: %d\n", len);
+		return -1;
+	}
+	
+	// Log SDT header info
+	unsigned short transport_stream_id = (data[3] << 8) | data[4];
+	unsigned short original_network_id = (data[8] << 8) | data[9];
+	DEBUG_PRINT("SDT for TSID: %d, Original Network ID: %d\n", 
+		transport_stream_id, original_network_id);
 	
 	while (pos + 4 < len) {
 		// Service ID is a 16-bit value
@@ -303,7 +335,17 @@ static int parse_sdt_content(unsigned char *data, int len, PyObject *content_lis
 		unsigned char free_ca = (data[pos + 3] >> 4) & 0x01;
 		unsigned short descriptors_loop_length = ((data[pos + 3] & 0x0f) << 8) | data[pos + 4];
 		
+		DEBUG_PRINT("Found service ID: %d, status: %d, free_ca: %d, desc length: %d\n", 
+			service_id, running_status, free_ca, descriptors_loop_length);
+		
 		pos += 5;
+		
+		if (pos + descriptors_loop_length > len) {
+			DEBUG_PRINT("Descriptor loop exceeds buffer length: %d > %d\n", 
+				pos + descriptors_loop_length, len);
+			// Don't return error, try to continue with the services found so far
+			break;
+		}
 		
 		// Create service entry
 		PyObject *service = PyDict_New();
@@ -318,24 +360,46 @@ static int parse_sdt_content(unsigned char *data, int len, PyObject *content_lis
 		
 		// Parse descriptors
 		int descriptors_end = pos + descriptors_loop_length;
+		int service_descriptor_found = 0;
+		
 		while (pos < descriptors_end && pos < len) {
+			if (pos + 2 > len) {
+				DEBUG_PRINT("Descriptor header truncated\n");
+				break; // Descriptor header truncated
+			}
+			
 			unsigned char descriptor_tag = data[pos];
 			unsigned char descriptor_length = data[pos + 1];
 			
+			DEBUG_PRINT("Processing descriptor tag: 0x%02x, length: %d\n", 
+				descriptor_tag, descriptor_length);
+			
+			if (pos + 2 + descriptor_length > len) {
+				DEBUG_PRINT("Descriptor exceeds buffer length\n");
+				break; // Descriptor data truncated
+			}
+			
 			// Service descriptor (0x48)
 			if (descriptor_tag == 0x48) {
-				parse_service_descriptor(&data[pos], descriptor_length + 2, service);
+				DEBUG_PRINT("Found service descriptor for service ID: %d\n", service_id);
+				service_descriptor_found = 1;
+				if (parse_service_descriptor(&data[pos], descriptor_length + 2, service) < 0) {
+					DEBUG_PRINT("Error parsing service descriptor\n");
+				}
 			}
 			
 			pos += descriptor_length + 2;
 		}
 		
-		// Add service to the content list
+		// Even if no service descriptor was found, we still add the service
+		// since the ID and other basic info is still useful
 		PyList_Append(content_list, service);
 		Py_DECREF(service);
+		services_found++;
 	}
 	
-	return 0;
+	DEBUG_PRINT("SDT parsing complete, found %d services\n", services_found);
+	return (services_found > 0) ? 0 : -1;
 }
 
 // Parse NIT (Network Information Table)
@@ -513,7 +577,10 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 			}
 			
 			// Parse section content based on table ID
-			if (buffer[0] == 0x42 || buffer[0] == 0x46) {  // SDT
+			DEBUG_PRINT("Processing section with table ID: 0x%02x\n", buffer[0]);
+			
+			if (buffer[0] == 0x42 || buffer[0] == 0x46) {  // SDT (actual or other)
+				DEBUG_PRINT("Found SDT table (0x%02x), parsing content\n", buffer[0]);
 				if (parse_sdt_content(buffer, section_length + 3, content) < 0) {
 					DEBUG_PRINT("Error parsing SDT content\n");
 					retry_count--;
@@ -521,7 +588,8 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 					Py_DECREF(content);
 					continue;
 				}
-			} else if (buffer[0] == 0x40 || buffer[0] == 0x41) {  // NIT
+			} else if (buffer[0] == 0x40 || buffer[0] == 0x41) {  // NIT (actual or other)
+				DEBUG_PRINT("Found NIT table (0x%02x), parsing content\n", buffer[0]);
 				if (parse_nit_content(buffer, section_length + 3, content) < 0) {
 					DEBUG_PRINT("Error parsing NIT content\n");
 					retry_count--;
@@ -529,6 +597,21 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 					Py_DECREF(content);
 					continue;
 				}
+			} else if (buffer[0] == 0x4E || buffer[0] == 0x4F || // EIT (present/following - actual or other)
+					  (buffer[0] >= 0x50 && buffer[0] <= 0x6F)) { // EIT (schedule - actual or other)
+				// For EIT tables, we just extract the basic header info
+				// This helps with service detection for channels that only broadcast EIT
+				DEBUG_PRINT("Found EIT table (0x%02x), adding basic info\n", buffer[0]);
+				
+				// Add the table information to the content to signal we found something
+				PyObject *eit_info = PyDict_New();
+				PyDict_SetItemString(eit_info, "table_id", PyLong_FromLong(buffer[0]));
+				PyDict_SetItemString(eit_info, "service_id", PyLong_FromLong((buffer[3] << 8) | buffer[4]));
+				PyDict_SetItemString(eit_info, "ts_id", PyLong_FromLong((buffer[8] << 8) | buffer[9]));
+				PyDict_SetItemString(eit_info, "original_network_id", PyLong_FromLong((buffer[10] << 8) | buffer[11]));
+				
+				PyList_Append(content, eit_info);
+				Py_DECREF(eit_info);
 			}
 			
 			// Create result dictionary
@@ -547,7 +630,8 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 		// Sleep briefly before trying again with outer loop
 		struct timespec ts;
 		ts.tv_sec = 0;
-		ts.tv_nsec = 250000000;  // 250ms
+		ts.tv_nsec = 500000000;  // 500ms - increased from 250ms for more reliable recovery
+		DEBUG_PRINT("All inner retries failed, sleeping 500ms before outer retry %d of 3\n", 4 - outer_retry);
 		nanosleep(&ts, NULL);
 		
 		outer_retry--;
