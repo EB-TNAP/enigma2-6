@@ -393,6 +393,11 @@ static int parse_sdt_content(unsigned char *data, int len, PyObject *content_lis
 		
 		// Even if no service descriptor was found, we still add the service
 		// since the ID and other basic info is still useful
+		if (!service_descriptor_found) {
+			DEBUG_PRINT("No service descriptor found for service ID: %d\n", service_id);
+			PyDict_SetItemString(service, "missing_descriptor", PyLong_FromLong(1));
+		}
+		
 		PyList_Append(content_list, service);
 		Py_DECREF(service);
 		services_found++;
@@ -616,7 +621,7 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 				// For PAT tables, extract the program information
 				DEBUG_PRINT("Found PAT table (0x00), adding program info\n");
 				
-				if (len >= 8) {  // Minimum length for PAT
+				if (bytes_read >= 8) {  // Minimum length for PAT
 					unsigned short ts_id = (buffer[3] << 8) | buffer[4];
 					DEBUG_PRINT("PAT for TSID: %d\n", ts_id);
 					
@@ -624,7 +629,7 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 					int pos = 8;  // Start after the fixed header
 					
 					// Process all program entries
-					while (pos + 4 <= section_length + 3) {
+					while (pos + 4 <= bytes_read && pos + 4 <= section_length + 3) {
 						unsigned short program_number = (buffer[pos] << 8) | buffer[pos + 1];
 						unsigned short pid = ((buffer[pos + 2] & 0x1F) << 8) | buffer[pos + 3];
 						
