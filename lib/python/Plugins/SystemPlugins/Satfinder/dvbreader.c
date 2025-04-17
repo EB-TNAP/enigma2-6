@@ -23,9 +23,9 @@
 // Define constants
 #define TS_PACKET_SIZE 188
 #define MAX_SECTION_SIZE 4096
-#define DEFAULT_SECTION_TIMEOUT_MS 2000    // Up from 500ms
-#define DEFAULT_COMPLETE_TIMEOUT_MS 45000  // Up from 20s
-#define MAX_RETRY_COUNT 15 // Up from 5
+#define DEFAULT_SECTION_TIMEOUT_MS 1000    // Adjusted value for better responsiveness
+#define DEFAULT_COMPLETE_TIMEOUT_MS 30000  // Adjusted timeout
+#define MAX_RETRY_COUNT 8                  // Reduced retries for better UI responsiveness
 #define SECTION_HEADER_LENGTH 3
 // Debug macro - change to 1 to enable debug output
 #define DEBUG_DVBREADER 1
@@ -532,8 +532,8 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 	int section_length;
 	PyObject *result = NULL, *header = NULL, *content = NULL;
 	
-	// Add outer retry loop
-	int outer_retry = 3;
+	// Add outer retry loop with reduced count for better performance
+	int outer_retry = 2;
 	
 	while (outer_retry > 0) {
 		// Reset inner retry count each time through outer loop
@@ -612,6 +612,43 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 				
 				PyList_Append(content, eit_info);
 				Py_DECREF(eit_info);
+			} else if (buffer[0] == 0x00) { // PAT (Program Association Table)
+				// For PAT tables, extract the program information
+				DEBUG_PRINT("Found PAT table (0x00), adding program info\n");
+				
+				if (len >= 8) {  // Minimum length for PAT
+					unsigned short ts_id = (buffer[3] << 8) | buffer[4];
+					DEBUG_PRINT("PAT for TSID: %d\n", ts_id);
+					
+					// Skip header and process program entries
+					int pos = 8;  // Start after the fixed header
+					
+					// Process all program entries
+					while (pos + 4 <= section_length + 3) {
+						unsigned short program_number = (buffer[pos] << 8) | buffer[pos + 1];
+						unsigned short pid = ((buffer[pos + 2] & 0x1F) << 8) | buffer[pos + 3];
+						
+						if (program_number != 0) {  // Skip network_PID entry (program_number == 0)
+							DEBUG_PRINT("Found program: %d, PMT PID: 0x%04x\n", program_number, pid);
+							
+							// Create a service entry with the program info
+							PyObject *service = PyDict_New();
+							PyDict_SetItemString(service, "service_id", PyLong_FromLong(program_number));
+							PyDict_SetItemString(service, "pmt_pid", PyLong_FromLong(pid));
+							PyDict_SetItemString(service, "from_pat", PyLong_FromLong(1));
+							
+							// Add default values that would normally come from SDT
+							PyDict_SetItemString(service, "service_name", PyUnicode_FromFormat("Service %d", program_number));
+							PyDict_SetItemString(service, "provider_name", PyUnicode_FromString(""));
+							PyDict_SetItemString(service, "service_type", PyLong_FromLong(1));  // Default to TV service
+							
+							PyList_Append(content, service);
+							Py_DECREF(service);
+						}
+						
+						pos += 4;  // Move to next program entry
+					}
+				}
 			}
 			
 			// Create result dictionary
@@ -630,8 +667,8 @@ static PyObject* read_section(int fd, uint8_t table_id, uint8_t table_id_mask, u
 		// Sleep briefly before trying again with outer loop
 		struct timespec ts;
 		ts.tv_sec = 0;
-		ts.tv_nsec = 500000000;  // 500ms - increased from 250ms for more reliable recovery
-		DEBUG_PRINT("All inner retries failed, sleeping 500ms before outer retry %d of 3\n", 4 - outer_retry);
+		ts.tv_nsec = 250000000;  // 250ms - reduced from 500ms for better UI responsiveness
+		DEBUG_PRINT("All inner retries failed, sleeping 250ms before outer retry %d of 3\n", 4 - outer_retry);
 		nanosleep(&ts, NULL);
 		
 		outer_retry--;
@@ -651,8 +688,38 @@ static PyObject* dvbreader_read_sdt(PyObject *self, PyObject *args) {
 	if (!PyArg_ParseTuple(args, "iii", &fd, &table_id, &table_id_mask))
 		return NULL;
 	
-	// Read the section
-	return read_section(fd, table_id, table_id_mask, 0);
+	// Try reading SDT first
+	PyObject *result = read_section(fd, table_id, table_id_mask, 0);
+	
+	// If SDT didn't return any services or returned None, try reading PAT
+	if (result == Py_None || result == NULL) {
+		DEBUG_PRINT("SDT read failed, trying PAT (0x00) instead\n");
+		
+		// We need to reopen the demux for PAT
+		if (setup_filter(fd, 0x00, 0x00, 0xff, 0) == 0) {
+			DEBUG_PRINT("Demux refiltered for PAT\n");
+			// Try to read PAT
+			result = read_section(fd, 0x00, 0xff, 0);
+		}
+	} else {
+		PyObject *content = PyDict_GetItemString(result, "content");
+		if (content != NULL && PyList_Size(content) == 0) {
+			DEBUG_PRINT("SDT returned empty content, trying PAT\n");
+			Py_DECREF(result);
+			
+			// We need to reopen the demux for PAT
+			if (setup_filter(fd, 0x00, 0x00, 0xff, 0) == 0) {
+				DEBUG_PRINT("Demux refiltered for PAT\n");
+				// Try to read PAT
+				result = read_section(fd, 0x00, 0xff, 0);
+			} else {
+				result = Py_None;
+				Py_INCREF(result);
+			}
+		}
+	}
+	
+	return result;
 }
 
 // Function to read NIT (Network Information Table)
