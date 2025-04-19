@@ -23,7 +23,6 @@ THREAD_RUNNING = True
 
 try: # for reading the current transport stream (SatfinderExtra)
 	from Plugins.SystemPlugins.Satfinder import dvbreader
-	has_enhanced_dvbreader = hasattr(dvbreader, 'set_timeouts')
 	dvbreader_available = True
 	# Fix chmod octal value
 	os.chmod("/usr/lib/enigma2/python/Plugins/SystemPlugins/Satfinder/dvbreader.so", 0o755)
@@ -824,14 +823,7 @@ class SatfinderExtra(Satfinder):
 
 		if not dvbreader_available or self.frontend is None or self.demux < 0:
 			return
-		# Configure improved dvbreader settings if available
-		if has_enhanced_dvbreader:
-			# For slow transponders, increase timeouts and retries
-			dvbreader.set_timeouts(
-				section_timeout_ms=1000,     # 1 second per section read
-				complete_timeout_ms=30000    # 30 seconds overall timeout
-			)
-			dvbreader.set_retry_count(10)    # Try up to 10 times for each section
+
 		if from_retune:  # give the tuner a chance to retune
 			time.sleep(1.0)
 
