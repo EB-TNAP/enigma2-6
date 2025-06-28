@@ -137,9 +137,16 @@ class About(Screen):
 			address = config.hdmicec.fixed_physical_address.value if config.hdmicec.fixed_physical_address.value != "0.0.0.0" else _("not set")
 			AboutText += "\n\n" + _("HDMI-CEC address") + ": " + address
 
+		# TNAP AI Development Acknowledgment
+		AboutText += "\n\n" + "=" * 66
+		AboutText += "\n" + _("TNAP Image Development:")
+		AboutText += "\n" + _("Coding & enhancements assisted by AI - Claude (Anthropic)")
+		AboutText += "\n" + _("Additional AI models used as needed")
+		AboutText += "\n" + "=" * 66
+
 		self["AboutScrollLabel"] = ScrollLabel(AboutText)
 		self["key_green"] = Button(_("Translations"))
-		self["key_red"] = Button(_("Latest Commits"))
+		self["key_red"] = Button(_("Default Packages"))
 		self["key_yellow"] = Button(_("Troubleshoot"))
 		self["key_blue"] = Button(_("Memory Info"))
 
@@ -159,7 +166,7 @@ class About(Screen):
 		self.session.open(TranslationInfo)
 
 	def showCommits(self):
-		self.session.open(CommitInfo)
+		self.session.open(ManifestInfo)
 
 	def showMemoryInfo(self):
 		self.session.open(MemoryInfo)
@@ -206,97 +213,89 @@ class TranslationInfo(Screen):
 			})
 
 
-class CommitInfo(Screen):
+class ManifestInfo(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
-		self.setTitle(_("Latest Commits"))
+		self.setTitle(_("Package Manifest"))
 		self.skinName = ["CommitInfo", "About"]
-		self["AboutScrollLabel"] = ScrollLabel(_("Please wait"))
+		self["AboutScrollLabel"] = ScrollLabel(_("Loading package manifest..."))
 
 		self["actions"] = ActionMap(["SetupActions", "DirectionActions"],
 			{
 				"cancel": self.close,
 				"ok": self.close,
 				"up": self["AboutScrollLabel"].pageUp,
-				"down": self["AboutScrollLabel"].pageDown,
-				"left": self.left,
-				"right": self.right
+				"down": self["AboutScrollLabel"].pageDown
 			})
 
 		self["key_red"] = Button(_("Cancel"))
+		
+		# Load manifest content
+		self.loadManifest()
 
-		# get the branch to display from the Enigma version
+	def loadManifest(self):
+		manifestContent = ""
 		try:
-			branch = "?sha=" + "-".join(about.getEnigmaVersionString().split("-")[3:])
-		except:
-			branch = ""
-		branch_e2plugins = "?sha=python3"
-
-		self.project = 0
-		self.projects = [
-			("https://api.github.com/repos/openpli/enigma2/commits" + branch, "Enigma2", API_GITHUB),
-			("https://api.github.com/repos/openpli/openpli-oe-core/commits" + branch, "Openpli Oe Core", API_GITHUB),
-			("https://api.github.com/repos/openpli/enigma2-plugins/commits" + branch_e2plugins, "Enigma2 Plugins", API_GITHUB),
-			("https://api.github.com/repos/openpli/aio-grab/commits", "Aio Grab", API_GITHUB),
-			("https://api.github.com/repos/openpli/enigma2-plugin-extensions-epgimport/commits", "Plugin EPGImport", API_GITHUB),
-			("https://api.github.com/repos/littlesat/skin-PLiHD/commits", "Skin PLi HD", API_GITHUB),
-			("https://api.github.com/repos/E2OpenPlugins/e2openplugin-OpenWebif/commits", "OpenWebif", API_GITHUB),
-			("https://gitlab.openpli.org/api/v4/projects/5/repository/commits", "Hans settings", API_GITLAB)
-		]
-		self.cachedProjects = {}
-		self.Timer = eTimer()
-		self.Timer.callback.append(self.readGithubCommitLogs)
-		self.Timer.start(50, True)
-
-	def readGithubCommitLogs(self):
-		url = self.projects[self.project][0]
-		commitlog = ""
-		from datetime import datetime
-		from json import loads
-		from urllib.request import urlopen
-		try:
-			commitlog += 80 * '-' + '\n'
-			commitlog += url.split('/')[-2] + '\n'
-			commitlog += 80 * '-' + '\n'
-			try:
-				# OpenPli 5.0 uses python 2.7.11 and here we need to bypass the certificate check
-				from ssl import _create_unverified_context
-				log = loads(urlopen(url, timeout=5, context=_create_unverified_context()).read())
-			except:
-				log = loads(urlopen(url, timeout=5).read())
-
-			if self.projects[self.project][2] == API_GITHUB:
-				for c in log:
-					creator = c['commit']['author']['name']
-					title = c['commit']['message']
-					date = datetime.strptime(c['commit']['committer']['date'], '%Y-%m-%dT%H:%M:%SZ').strftime('%x %X')
-					commitlog += date + ' ' + creator + '\n' + title + 2 * '\n'
-			elif self.projects[self.project][2] == API_GITLAB:
-				for c in log:
-					creator = c['author_name']
-					title = c['title']
-					date = datetime.strptime(c['committed_date'], '%Y-%m-%dT%H:%M:%S.000%z').strftime('%x %X')
-					commitlog += date + ' ' + creator + '\n' + title + 2 * '\n'
-
-			self.cachedProjects[self.projects[self.project][1]] = commitlog
+			# Try multiple possible locations for the manifest file
+			manifest_locations = [
+				"/etc/tnap-manifest.txt",
+				"/usr/share/tnap-manifest.txt", 
+				"/tmp/tnap-manifest.txt",
+				"/var/lib/tnap-manifest.txt"
+			]
+			
+			manifest_found = False
+			for location in manifest_locations:
+				try:
+					with open(location, 'r') as f:
+						manifestContent = f.read()
+						manifest_found = True
+						break
+				except:
+					continue
+			
+			if not manifest_found:
+				# Fallback: generate from opkg if manifest file not found
+				manifestContent = self.generateFromOpkg()
+				
 		except Exception as e:
-			commitlog += _("Currently the commit log cannot be retrieved - please try later again.")
-		self["AboutScrollLabel"].setText(commitlog)
+			manifestContent = "Error loading manifest: " + str(e)
+			manifestContent += "\n\nFallback: Using opkg list-installed\n"
+			manifestContent += "=" * 50 + "\n"
+			manifestContent += self.generateFromOpkg()
+		
+		self["AboutScrollLabel"].setText(manifestContent)
 
-	def updateCommitLogs(self):
-		if self.projects[self.project][1] in self.cachedProjects:
-			self["AboutScrollLabel"].setText(self.cachedProjects[self.projects[self.project][1]])
-		else:
-			self["AboutScrollLabel"].setText(_("Please wait"))
-			self.Timer.start(50, True)
-
-	def left(self):
-		self.project = self.project == 0 and len(self.projects) - 1 or self.project - 1
-		self.updateCommitLogs()
-
-	def right(self):
-		self.project = self.project != len(self.projects) - 1 and self.project + 1 or 0
-		self.updateCommitLogs()
+	def generateFromOpkg(self):
+		"""Generate manifest-like content from opkg if manifest file not available"""
+		try:
+			import subprocess
+			result = subprocess.run(['opkg', 'list-installed'], 
+								  capture_output=True, text=True, timeout=10)
+			if result.returncode == 0:
+				content = "TNAP Package List (from opkg)\n"
+				content += "=" * 50 + "\n\n"
+				
+				# Parse opkg output and format it
+				packages = []
+				for line in result.stdout.split('\n'):
+					if line.strip():
+						parts = line.split(' - ')
+						if len(parts) >= 2:
+							packages.append((parts[0], parts[1]))
+				
+				# Sort packages alphabetically
+				packages.sort(key=lambda x: x[0])
+				
+				for pkg, version in packages:
+					content += f"{pkg} - {version}\n"
+				
+				content += f"\n\nTotal packages: {len(packages)}"
+				return content
+			else:
+				return "Error running opkg list-installed"
+		except Exception as e:
+			return "Error generating package list: " + str(e)
 
 
 class MemoryInfo(Screen):
