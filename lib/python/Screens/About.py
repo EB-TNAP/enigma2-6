@@ -145,7 +145,7 @@ class About(Screen):
 		AboutText += "\n" + "=" * 66
 
 		self["AboutScrollLabel"] = ScrollLabel(AboutText)
-		self["key_green"] = Button(_("Translations"))
+		self["key_green"] = Button(_("Packages-Installed"))
 		self["key_red"] = Button(_("Default Packages"))
 		self["key_yellow"] = Button(_("Troubleshoot"))
 		self["key_blue"] = Button(_("Memory Info"))
@@ -155,15 +155,15 @@ class About(Screen):
 				"cancel": self.close,
 				"ok": self.close,
 				"red": self.showCommits,
-				"green": self.showTranslationInfo,
+				"green": self.showPackagesInstalled,
 				"blue": self.showMemoryInfo,
 				"yellow": self.showTroubleshoot,
 				"up": self["AboutScrollLabel"].pageUp,
 				"down": self["AboutScrollLabel"].pageDown
 			})
 
-	def showTranslationInfo(self):
-		self.session.open(TranslationInfo)
+	def showPackagesInstalled(self):
+		self.session.open(PackagesInstalled)
 
 	def showCommits(self):
 		self.session.open(ManifestInfo)
@@ -213,6 +213,60 @@ class TranslationInfo(Screen):
 			})
 
 
+class PackagesInstalled(Screen):
+	def __init__(self, session):
+		Screen.__init__(self, session)
+		self.setTitle(_("Packages Installed"))
+		self.skinName = ["CommitInfo", "About"]
+		self["AboutScrollLabel"] = ScrollLabel(_("Loading installed packages..."))
+
+		self["actions"] = ActionMap(["SetupActions", "DirectionActions"],
+			{
+				"cancel": self.close,
+				"ok": self.close,
+				"up": self["AboutScrollLabel"].pageUp,
+				"down": self["AboutScrollLabel"].pageDown
+			})
+
+		self["key_red"] = Button(_("Cancel"))
+		
+		self.loadPackages()
+
+	def loadPackages(self):
+		packagesContent = ""
+		try:
+			import subprocess
+			result = subprocess.run(['opkg', 'list-installed'], 
+								  capture_output=True, text=True, timeout=15)
+			if result.returncode == 0:
+				content = "Installed Packages\n"
+				content += "=" * 50 + "\n\n"
+				
+				packages = []
+				for line in result.stdout.split('\n'):
+					if line.strip():
+						parts = line.split(' - ')
+						if len(parts) >= 2:
+							packages.append((parts[0], parts[1]))
+				
+				packages.sort(key=lambda x: x[0])
+				
+				for pkg, version in packages:
+					content += f"{pkg} - {version}\n"
+				
+				content += f"\n\nTotal packages: {len(packages)}"
+				packagesContent = content
+			else:
+				packagesContent = "Error running opkg list-installed\n"
+				packagesContent += "Return code: " + str(result.returncode)
+				if result.stderr:
+					packagesContent += "\nError output: " + result.stderr
+		except Exception as e:
+			packagesContent = "Error loading installed packages: " + str(e)
+		
+		self["AboutScrollLabel"].setText(packagesContent)
+
+
 class ManifestInfo(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
@@ -255,47 +309,42 @@ class ManifestInfo(Screen):
 					continue
 			
 			if not manifest_found:
-				# Fallback: generate from opkg if manifest file not found
-				manifestContent = self.generateFromOpkg()
+				manifestContent = "No manifest file found at any of the expected locations:\n"
+				for location in manifest_locations:
+					manifestContent += f"  - {location}\n"
+				manifestContent += "\nA manifest file contains the list of default packages that came with your image.\n"
+				manifestContent += "Use the green 'Packages-Installed' button to see currently installed packages."
+			else:
+				# Count packages in the manifest file
+				packageCount = self.countPackagesInManifest(manifestContent)
+				if packageCount > 0:
+					manifestContent += f"\n\nTotal packages in manifest: {packageCount}"
 				
 		except Exception as e:
 			manifestContent = "Error loading manifest: " + str(e)
-			manifestContent += "\n\nFallback: Using opkg list-installed\n"
-			manifestContent += "=" * 50 + "\n"
-			manifestContent += self.generateFromOpkg()
 		
 		self["AboutScrollLabel"].setText(manifestContent)
 
-	def generateFromOpkg(self):
-		"""Generate manifest-like content from opkg if manifest file not available"""
+	def countPackagesInManifest(self, manifestContent):
+		"""Count packages in the manifest file content"""
 		try:
-			import subprocess
-			result = subprocess.run(['opkg', 'list-installed'], 
-								  capture_output=True, text=True, timeout=10)
-			if result.returncode == 0:
-				content = "TNAP Package List (from opkg)\n"
-				content += "=" * 50 + "\n\n"
+			packageCount = 0
+			lines = manifestContent.split('\n')
+			
+			for line in lines:
+				line = line.strip()
+				# Skip empty lines and common non-package lines
+				if not line or line.startswith('#') or line.startswith('=') or line.startswith('Total') or line.startswith('TNAP'):
+					continue
 				
-				# Parse opkg output and format it
-				packages = []
-				for line in result.stdout.split('\n'):
-					if line.strip():
-						parts = line.split(' - ')
-						if len(parts) >= 2:
-							packages.append((parts[0], parts[1]))
-				
-				# Sort packages alphabetically
-				packages.sort(key=lambda x: x[0])
-				
-				for pkg, version in packages:
-					content += f"{pkg} - {version}\n"
-				
-				content += f"\n\nTotal packages: {len(packages)}"
-				return content
-			else:
-				return "Error running opkg list-installed"
-		except Exception as e:
-			return "Error generating package list: " + str(e)
+				# Count lines that look like package entries
+				# Common formats: "package-name - version" or "package-name version"
+				if ' - ' in line or (line and not line.startswith(' ') and (' ' in line or line.replace('-', '').replace('_', '').replace('.', '').isalnum())):
+					packageCount += 1
+			
+			return packageCount
+		except Exception:
+			return 0
 
 
 class MemoryInfo(Screen):
