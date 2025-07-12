@@ -4,7 +4,7 @@ from Screens.ParentalControlSetup import ProtectedScreen
 from Screens.Screen import Screen
 from Screens.Standby import TryQuitMainloop
 from Screens.TextBox import TextBox
-from Screens.About import CommitInfo
+# from Screens.About import CommitInfo  # Removed - CommitInfo functionality disabled
 from Components.config import config
 from Components.About import about
 from Components.ActionMap import ActionMap
@@ -266,8 +266,8 @@ class UpdatePlugin(Screen, ProtectedScreen):
 			self.channellist_only = 1
 			self.slider.setValue(1)
 			self.opkg.startCmd(OpkgComponent.CMD_LIST, args={'installed_only': True})
-		elif answer[1] == "commits":
-			self.session.openWithCallback(boundFunction(self.opkgCallback, OpkgComponent.EVENT_DONE, None), CommitInfo)
+		# elif answer[1] == "commits":  # Removed - CommitInfo functionality disabled
+		#	self.session.openWithCallback(boundFunction(self.opkgCallback, OpkgComponent.EVENT_DONE, None), CommitInfo)
 		elif answer[1] == "showlist":
 			text = "\n".join([x[0] for x in sorted(self.opkg.getFetchedList(), key=lambda d: d[0])])
 			self.session.openWithCallback(boundFunction(self.opkgCallback, OpkgComponent.EVENT_DONE, None), TextBox, text, _("Packages to update"), True)
