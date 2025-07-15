@@ -49,7 +49,7 @@
 		<button name="TEXT" pos="21,427" />
 		<button name="SUBTITLE" pos="48,427" />
 		<button name="TV" pos="76,427" />
-		<button name="RADIO" pos="76,427" />
+		<button name="RADIO" pos="105,409" />
 		<button name="FAVORITES" pos="105,427" />
 
 	</rc>
