@@ -398,7 +398,7 @@
 	<map context="InfobarActions">
 		<key id="KEY_VIDEO" mapto="showMovies" flags="b" />
 		<key id="KEY_RADIO" mapto="showRadio" flags="b" />
-		<key id="KEY_TV" mapto="showTv" flags="b" />
+		<key id="KEY_TV" mapto="toggleTvRadio" flags="b" />
 		<key id="KEY_TV2" mapto="toggleTvRadio" flags="b" />
 		<key id="KEY_FILE" mapto="showMovies" flags="m" />
 		<key id="KEY_TEXT" mapto="showText" flags="m" />
@@ -608,6 +608,8 @@
 		<key id="KEY_RECORD" mapto="keyRecord" flags="m" />
 		<key id="KEY_FAVORITES" mapto="showFavourites" flags="m" />
 		<key id="KEY_TEXT" mapto="toggleTwoLines" flags="m" />
+		<key id="KEY_TV" mapto="toggleTvRadio" flags="b" />
+		<key id="KEY_TV2" mapto="toggleTvRadio" flags="b" />
 	</map>
 
 	<map context="ChannelSelectEPGActions">
@@ -625,7 +627,7 @@
 	</map>
 
 	<map context="TvRadioActions">
-		<key id="KEY_TV" mapto="keyTV" flags="b" />
+		<key id="KEY_TV" mapto="toggleTvRadio" flags="b" />
 		<key id="KEY_TV2" mapto="toggleTvRadio" flags="b" />
 		<key id="KEY_RADIO" mapto="keyRadio" flags="b" />
 		<key id="KEY_AUDIO" mapto="audio" flags="b" />
