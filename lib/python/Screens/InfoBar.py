@@ -403,7 +403,7 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, InfoBarMenu, InfoBarSeek, InfoBa
 			self.showMovies()
 
 	def right(self):
-		if self.servicelist and self.servicelist.dopipzap:
+		if self.servicelist and hasattr(self.servicelist, 'dopipzap') and self.servicelist.dopipzap:
 			if config.usage.oldstyle_zap_controls.value:
 				self.switchChannelDown()
 			else:
@@ -412,7 +412,7 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, InfoBarMenu, InfoBarSeek, InfoBa
 			InfoBarSeek.seekFwd(self)
 
 	def left(self):
-		if self.servicelist and self.servicelist.dopipzap:
+		if self.servicelist and hasattr(self.servicelist, 'dopipzap') and self.servicelist.dopipzap:
 			if config.usage.oldstyle_zap_controls.value:
 				self.switchChannelUp()
 			else:
@@ -421,13 +421,13 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, InfoBarMenu, InfoBarSeek, InfoBa
 			InfoBarSeek.seekBack(self)
 
 	def channelUp(self):
-		if config.usage.zap_with_ch_buttons.value and self.servicelist and self.servicelist.dopipzap:
+		if config.usage.zap_with_ch_buttons.value and self.servicelist and hasattr(self.servicelist, 'dopipzap') and self.servicelist.dopipzap:
 			self.zapDown()
 		else:
 			return 0
 
 	def channelDown(self):
-		if config.usage.zap_with_ch_buttons.value and self.servicelist and self.servicelist.dopipzap:
+		if config.usage.zap_with_ch_buttons.value and self.servicelist and hasattr(self.servicelist, 'dopipzap') and self.servicelist.dopipzap:
 			self.zapUp()
 		else:
 			return 0
