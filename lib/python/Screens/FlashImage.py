@@ -23,6 +23,7 @@ import zipfile
 import shutil
 import tempfile
 import struct
+import hashlib
 
 from enigma import eEPGCache
 
@@ -356,7 +357,233 @@ class FlashImage(Screen):
 
 	def downloadEnd(self):
 		self.downloader.stop()
-		self.unzip()
+		self.verifyChecksum()
+
+	def verifyChecksum(self):
+		self["header"].setText(_("Verifying Image Integrity"))
+		self["info"].setText("%s\n%s" % (self.imagename, _("Checking file integrity...")))
+		self["progress"].setValue(0)
+		self.callLater(self.doVerifyChecksum)
+
+	def doVerifyChecksum(self):
+		try:
+			# Check if this is a TNAP image from tnapimages.com or TNAP IP server (162.216.113.217)
+			source_str = str(self.source).lower()
+			is_tnap_source = ("tnapimages.com" in source_str or "162.216.113.217" in source_str)
+			is_tnap_image = ("tnap" in str(self.imagename).lower())
+			
+			print("[FlashImage] TNAP source: %s, TNAP image: %s, Source: %s" % (is_tnap_source, is_tnap_image, source_str))
+			
+			if is_tnap_source and is_tnap_image:
+				self["info"].setText("%s\n%s" % (self.imagename, _("Fetching checksums from tnapimages.com...")))
+				self["progress"].setValue(25)
+				
+				# Fetch checksums from the enhanced API I built
+				checksum_data = self.fetchTNAPChecksums()
+				if checksum_data:
+					self["info"].setText("%s\n%s" % (self.imagename, _("Calculating SHA256 hash...")))
+					self["progress"].setValue(50)
+					
+					# Calculate file hash
+					file_hash = self.calculateSHA256(self.zippedimage)
+					self["progress"].setValue(75)
+					
+					# Verify against expected hash
+					expected_sha256 = str(checksum_data['sha256']) if checksum_data['sha256'] else ''
+					if file_hash.lower() == expected_sha256.lower():
+						self["header"].setText(_("✓ Checksum Verification Successful"))
+						self["info"].setText("%s\n%s\nSHA256: %s\n\n%s" % (self.imagename, _("File integrity verified!"), file_hash[:16] + "...", _("Proceeding with installation in 3 seconds...")))
+						self["progress"].setValue(100)
+						from enigma import eTimer
+						self.verification_timer = eTimer()
+						self.verification_timer.callback.append(self.unzip)
+						self.verification_timer.start(3000, True)  # 3 second delay
+					else:
+						self.session.openWithCallback(self.checksumFailed, MessageBox, 
+							_("⚠️ Checksum Verification Failed!\n\nExpected: %s\nActual: %s\n\nThis may indicate file corruption or tampering.\nDo you want to continue anyway?") % 
+							(expected_sha256[:16] + "...", file_hash[:16] + "..."), 
+							type=MessageBox.TYPE_YESNO, default=False)
+				else:
+					# No checksum available, proceed with warning
+					self.session.openWithCallback(self.noChecksumWarning, MessageBox, 
+						_("⚠️ No Checksum Available\n\nUnable to verify file integrity for this image.\nThis may be normal for non-TNAP images.\nDo you want to continue?"), 
+						type=MessageBox.TYPE_YESNO, default=True)
+			else:
+				# Not a TNAP image, skip verification
+				self.unzip()
+		except Exception as e:
+			# Verification failed, offer to continue
+			self.session.openWithCallback(self.verificationError, MessageBox, 
+				_("Verification Error: %s\n\nDo you want to continue without verification?") % str(e), 
+				type=MessageBox.TYPE_YESNO, default=False)
+
+	def fetchTNAPChecksums(self):
+		try:
+			# Use the enhanced API endpoint I built
+			api_url = "https://tnapimages.com/downloads/list-tnap-files-enhanced.php"
+			print("[FlashImage] Fetching checksums from:", api_url)
+			response = urlopen(api_url)
+			data = json.load(response)
+			
+			print("[FlashImage] API returned type:", type(data))
+			print("[FlashImage] API data preview:", str(data)[:200])
+			
+			# Handle different response formats
+			print("[FlashImage] Analyzing response structure...")
+			print("[FlashImage] All keys in response:", list(data.keys()) if isinstance(data, dict) else "Not a dict")
+			
+			if isinstance(data, dict):
+				# Check for various possible data structures
+				if 'files' in data:
+					print("[FlashImage] Found 'files' key")
+					files_data = data['files']
+				elif 'file_list' in data:
+					print("[FlashImage] Found 'file_list' key") 
+					files_data = data['file_list']  
+				elif 'checksums' in data:
+					print("[FlashImage] Found 'checksums' key")
+					files_data = data['checksums']
+				elif 'api_version' in data:
+					print("[FlashImage] Found 'api_version' key - metadata response detected")
+					# This looks like a metadata response, find the actual files
+					found_files = False
+					for key in data:
+						if isinstance(data[key], list) and key != 'download_stats':
+							files_data = data[key]
+							print("[FlashImage] Found files in key:", key, "with", len(files_data), "items")
+							found_files = True
+							break
+					if not found_files:
+						print("[FlashImage] API returned metadata but no files found")
+						print("[FlashImage] Available keys:", list(data.keys()))
+						# Show a sample of each key's type and value
+						for key, value in data.items():
+							print("[FlashImage] Key '%s': type=%s, value_preview=%s" % (key, type(value), str(value)[:100]))
+						return None
+				else:
+					print("[FlashImage] No standard keys found, treating as single file response")
+					files_data = [data]  # Single file response
+			elif isinstance(data, list):
+				files_data = data
+			else:
+				print("[FlashImage] Unexpected API response format:", type(data))
+				return None
+			
+			# Find checksum for our specific file
+			filename = os.path.basename(self.zippedimage)
+			print("[FlashImage] Looking for file:", filename)
+			print("[FlashImage] Files data type:", type(files_data))
+			print("[FlashImage] Files data length:", len(files_data) if isinstance(files_data, (list, dict)) else "N/A")
+			
+			# Show a sample of what's in files_data
+			if isinstance(files_data, list):
+				print("[FlashImage] First few files in array:")
+				for i, item in enumerate(files_data[:3]):  # Show first 3 items
+					if isinstance(item, dict):
+						item_name = item.get('name', item.get('filename', 'UNKNOWN'))
+						print("[FlashImage]   [%d] name='%s', keys=%s" % (i, item_name, list(item.keys())))
+					else:
+						print("[FlashImage]   [%d] type=%s, value=%s" % (i, type(item), str(item)[:50]))
+			elif isinstance(files_data, dict):
+				print("[FlashImage] Files data is a dict with keys:", list(files_data.keys()))
+				# Files are organized by receiver model, find our model
+				model_key = None
+				for key in files_data.keys():
+					if key in filename.lower() or key in self.source.lower():
+						model_key = key
+						break
+				
+				if not model_key:
+					# Try common model detection patterns
+					if 'sf8008' in filename.lower() or 'sf8008' in self.source.lower():
+						model_key = 'sf8008'
+					elif 'osmio4k' in filename.lower() or 'osmio4k' in self.source.lower():
+						model_key = 'osmio4k' 
+					elif 'osmini4k' in filename.lower() or 'osmini4k' in self.source.lower():
+						model_key = 'osmini4k'
+					elif 'ustym4kpro' in filename.lower() or 'ustym4kpro' in self.source.lower():
+						model_key = 'ustym4kpro'
+				
+				if model_key and model_key in files_data:
+					print("[FlashImage] Using model key:", model_key)
+					files_data = files_data[model_key]
+					print("[FlashImage] Model files count:", len(files_data))
+				else:
+					print("[FlashImage] Could not determine model or model not found")
+					print("[FlashImage] Available models:", list(files_data.keys()))
+					return None
+			
+			# Now search through the files
+			for file_info in files_data:
+				if isinstance(file_info, dict):
+					file_name = file_info.get('name', file_info.get('filename', ''))
+					print("[FlashImage] Checking file:", file_name, "against", filename)
+					
+					if file_name == filename:
+						print("[FlashImage] File info keys:", list(file_info.keys()))
+						print("[FlashImage] Has checksum field:", 'checksum' in file_info)
+						
+						if 'checksum' in file_info or 'checksum_sha256' in file_info or 'sha256' in file_info:
+							print("[FlashImage] Found checksum for:", filename)
+							
+							# Try multiple possible hash field names
+							sha256_hash = (file_info.get('checksum_sha256') or 
+										  file_info.get('sha256') or 
+										  file_info.get('checksum') or 
+										  file_info.get('hash_sha256'))
+							
+							# Handle nested checksum structures
+							checksum_data = file_info.get('checksum')
+							if isinstance(checksum_data, dict):
+								sha256_hash = checksum_data.get('sha256') or checksum_data.get('checksum_sha256')
+							elif isinstance(checksum_data, str):
+								sha256_hash = checksum_data
+							
+							print("[FlashImage] Extracted hash:", sha256_hash[:16] + "..." if sha256_hash else "None")
+							
+							return {
+								'sha256': str(sha256_hash) if sha256_hash else '',
+								'md5': file_info.get('checksum_md5', file_info.get('md5', '')),
+								'size': file_info.get('size_bytes', file_info.get('size', 0))
+							}
+			
+			print("[FlashImage] No checksum found for:", filename)
+			print("[FlashImage] Total files checked:", len(files_data) if isinstance(files_data, (list, dict)) else "N/A")
+			return None
+		except Exception as e:
+			print("[FlashImage] Checksum fetch error:", e)
+			import traceback
+			traceback.print_exc()
+			return None
+
+	def calculateSHA256(self, filepath):
+		sha256_hash = hashlib.sha256()
+		with open(filepath, "rb") as f:
+			for chunk in iter(lambda: f.read(8192), b""):
+				sha256_hash.update(chunk)
+		return sha256_hash.hexdigest()
+
+	def checksumFailed(self, result):
+		if result:
+			# User chose to continue despite checksum failure
+			self.unzip()
+		else:
+			# User chose to abort
+			self.session.openWithCallback(self.abort, MessageBox, 
+				_("Flash operation cancelled due to checksum verification failure."), 
+				type=MessageBox.TYPE_ERROR, timeout=5)
+
+	def noChecksumWarning(self, result):
+		if result:
+			self.unzip()
+		else:
+			self.abort()
+
+	def verificationError(self, result):
+		if result:
+			self.unzip()
+		else:
+			self.abort()
 
 	def unzip(self):
 		self["header"].setText(_("Unzipping Image"))
